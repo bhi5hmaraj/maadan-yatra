@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sri Maadan Yatra — Quotation Generator</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --brand:#1B3A4B;--terra:#C4622D;--terra-l:#E8835A;
+  --sand:#F5EFE0;--sand-d:#E8DECA;--ivory:#FBF8F2;
+  --ink:#1A1510;--ink-s:#3D3428;--muted:#7A6E60;
+  --border:#E0DDD5;--light:#F7F4EE;
+  --serif:'Cormorant Garamond',Georgia,serif;
+  --sans:'DM Sans',system-ui,sans-serif;
+}
+body{font-family:var(--sans);background:#EDEAE3;color:var(--ink);height:100vh;display:flex;flex-direction:column;overflow:hidden}
+
+/* APP HEADER */
+.app-header{background:var(--brand);padding:0.65rem 1.25rem;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;height:50px}
+.app-logo{font-family:var(--serif);font-size:1.2rem;font-weight:600;color:#fff}
+.app-logo span{color:#E8835A;font-style:italic}
+.app-sub{font-size:0.6rem;letter-spacing:0.15em;text-transform:uppercase;color:rgba(255,255,255,0.4)}
+.app-actions{display:flex;gap:8px}
+.btn{font-family:var(--sans);font-size:0.7rem;font-weight:500;letter-spacing:0.07em;text-transform:uppercase;padding:0.5rem 1rem;border-radius:2px;border:none;cursor:pointer;transition:all 0.2s}
+.btn-ghost{background:rgba(255,255,255,0.1);color:#fff;border:1px solid rgba(255,255,255,0.25)}
+.btn-ghost:hover{background:rgba(255,255,255,0.2)}
+.btn-primary{background:var(--terra);color:#fff}
+.btn-primary:hover{background:var(--terra-l)}
+.btn-primary:disabled{opacity:0.5;cursor:not-allowed}
+
+/* WORKSPACE */
+.workspace{flex:1;display:grid;grid-template-columns:380px 1fr;overflow:hidden}
+
+/* FORM PANEL */
+.form-panel{background:var(--ivory);border-right:1px solid var(--border);overflow-y:auto;overflow-x:hidden}
+.fsec{border-bottom:1px solid var(--border);padding:0.9rem 1.1rem}
+.fsec-title{font-size:0.62rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--terra);font-weight:500;margin-bottom:0.75rem;display:flex;align-items:center;gap:8px}
+.fsec-title::after{content:'';flex:1;height:1px;background:var(--sand-d)}
+.f{margin-bottom:0.6rem}
+.f:last-child{margin-bottom:0}
+.f > label{display:block;font-size:0.6rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);font-weight:500;margin-bottom:0.25rem}
+input[type=text],input[type=date],input[type=email],input[type=tel],input[type=number],textarea{
+  width:100%;padding:0.45rem 0.65rem;background:var(--sand);border:1px solid var(--border);
+  border-radius:2px;font-family:var(--sans);font-size:0.82rem;color:var(--ink);outline:none;transition:border-color 0.15s
+}
+input:focus,textarea:focus{border-color:var(--terra)}
+textarea{resize:vertical;line-height:1.5}
+.r2{display:grid;grid-template-columns:1fr 1fr;gap:0.5rem}
+.r3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.45rem}
+
+/* Line items */
+.li-hdr{display:grid;grid-template-columns:1fr 95px 72px 26px;gap:4px;margin-bottom:3px}
+.li-hdr span{font-size:0.58rem;letter-spacing:0.09em;text-transform:uppercase;color:var(--muted);font-weight:500}
+.li-row{display:grid;grid-template-columns:1fr 95px 72px 26px;gap:4px;margin-bottom:4px;align-items:center}
+.li-row input{font-size:0.8rem;padding:0.4rem 0.5rem}
+.rm-btn{width:24px;height:24px;background:none;border:1px solid var(--border);border-radius:2px;cursor:pointer;color:var(--muted);font-size:14px;display:flex;align-items:center;justify-content:center;transition:all 0.15s;flex-shrink:0;line-height:1}
+.rm-btn:hover{background:#FCEBEB;border-color:#F09595;color:#A32D2D}
+.add-btn{font-size:0.68rem;font-weight:500;color:var(--terra);background:none;border:1px dashed var(--terra);border-radius:2px;padding:0.3rem;cursor:pointer;width:100%;margin-top:3px}
+.add-btn:hover{background:rgba(196,98,45,0.05)}
+
+/* Itin */
+.iday{background:var(--sand);border:1px solid var(--border);border-radius:3px;padding:0.55rem 0.7rem;margin-bottom:5px}
+.iday-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:5px}
+.iday-lbl{font-size:0.6rem;font-weight:500;color:var(--brand);text-transform:uppercase;letter-spacing:0.08em}
+.iday .f{margin-bottom:4px}
+
+/* Inclusions */
+.inc-g{display:grid;grid-template-columns:1fr 1fr;gap:3px}
+.inc-cb{display:flex;align-items:center;gap:5px;font-size:0.8rem;color:var(--ink-s);cursor:pointer;padding:2px 0;-webkit-user-select:none;user-select:none}
+.inc-cb input{width:13px;height:13px;accent-color:var(--terra);flex-shrink:0;cursor:pointer}
+
+/* PREVIEW PANEL */
+.preview-panel{background:#B8B4AD;overflow:hidden;display:flex;flex-direction:column}
+.preview-toolbar{padding:0.6rem 1rem;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;background:#A8A49D}
+.prev-lbl{font-size:0.6rem;letter-spacing:0.1em;text-transform:uppercase;color:rgba(0,0,0,0.4);font-weight:500}
+.preview-scroll{flex:1;overflow-y:auto;overflow-x:hidden;display:flex;justify-content:center;padding:1rem}
+.doc-scale-wrap{transform-origin:top center;flex-shrink:0}
+
+/* DOCUMENT — fixed 794px, scaled to fit */
+#qdoc{background:#fff;width:794px;font-family:var(--sans);color:var(--ink);font-size:11px;line-height:1.5}
+
+/* Doc header */
+.dh{background:var(--brand);padding:16px 26px;display:flex;justify-content:space-between;align-items:center}
+.dh-logo{font-family:var(--serif);font-size:22px;font-weight:600;color:#fff;line-height:1}
+.dh-tag{font-size:7px;letter-spacing:0.2em;text-transform:uppercase;color:rgba(255,255,255,0.35);margin-top:2px}
+.dh-r{text-align:right}
+.dh-rlbl{font-size:7px;letter-spacing:0.15em;text-transform:uppercase;color:rgba(255,255,255,0.4)}
+.dh-num{font-family:var(--serif);font-size:17px;font-weight:300;color:#fff;margin:2px 0}
+.dh-date{font-size:8px;color:rgba(255,255,255,0.5)}
+.dh-valid{font-size:8px;color:var(--terra-l);font-weight:500;margin-top:1px}
+
+/* Doc body */
+.db{padding:18px 26px 22px}
+
+/* Meta grid — explicit 2-col */
+.mg{display:grid;grid-template-columns:50% 50%;border-bottom:1px solid var(--border);margin-bottom:16px;padding-bottom:12px}
+.mg-cell{padding:0 8px 8px 0}
+.mg-l{font-size:7px;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);font-weight:500;margin-bottom:2px}
+.mg-v{font-size:12px;font-weight:500;color:var(--ink);line-height:1.2}
+.mg-s{font-size:9px;color:var(--muted);margin-top:1px}
+
+/* Doc section label */
+.ds{font-size:7px;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);font-weight:500;display:block;margin:14px 0 7px;padding-bottom:3px;border-bottom:1px solid var(--border)}
+
+/* Price table */
+.pt{width:100%;border-collapse:collapse;margin-bottom:12px;font-size:10px;table-layout:fixed}
+.pt thead tr{background:var(--brand)}
+.pt thead th{padding:6px 9px;text-align:left;font-size:7px;letter-spacing:0.1em;text-transform:uppercase;font-weight:400;color:rgba(255,255,255,0.6);overflow:hidden}
+.pt thead th:first-child{width:46%}
+.pt thead th:nth-child(2){width:32%}
+.pt thead th:last-child{text-align:right;width:22%}
+.pt tbody tr:nth-child(even){background:var(--light)}
+.pt tbody td{padding:6px 9px;border-bottom:1px solid #EDE8DF;overflow:hidden;word-break:break-word}
+.pt tbody td:last-child{text-align:right;font-weight:500}
+.pt tfoot td{padding:7px 9px;background:var(--sand);font-weight:500}
+.pt-tot{font-family:var(--serif);font-size:20px;font-weight:300;color:var(--terra);text-align:right}
+
+/* Inclusions doc */
+.inc-doc{display:grid;grid-template-columns:50% 50%;gap:2px 14px;margin-bottom:10px}
+.idc{display:flex;align-items:flex-start;gap:5px;font-size:9.5px;color:var(--ink-s);padding:2px 0}
+.idd{width:11px;height:11px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.idd-y{background:#E1F5EE}
+.idd-n{background:#FCEBEB}
+.tick{width:5px;height:3.5px;border-left:1.5px solid #0F6E56;border-bottom:1.5px solid #0F6E56;transform:rotate(-45deg) translate(0.5px,-0.5px)}
+.xmark{font-size:7px;color:#A32D2D;font-weight:700;line-height:11px;text-align:center;width:11px}
+
+/* Itinerary */
+.it{width:100%;border-collapse:collapse;margin-bottom:12px;table-layout:fixed}
+.it td{padding:6px 9px;border-bottom:1px solid var(--border);vertical-align:top;font-size:10px}
+.it td:first-child{width:48px;padding-right:0}
+.dbadge{background:var(--brand);color:#fff;font-size:7px;font-weight:500;text-align:center;padding:3px 4px;border-radius:2px;white-space:nowrap}
+.it-t{font-weight:500;color:var(--ink);font-size:10.5px}
+.it-d{font-size:9px;color:var(--muted);margin-top:2px}
+
+/* Payment */
+.pg{display:grid;grid-template-columns:50% 50%;gap:9px;margin-bottom:12px}
+.pc{border:1px solid var(--border);border-radius:3px;padding:9px 11px}
+.pc.prim{border-color:var(--terra);background:#FDFAF7}
+.pc-l{font-size:7px;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);font-weight:500;margin-bottom:2px}
+.pc-l.acc{color:var(--terra)}
+.pc-a{font-family:var(--serif);font-size:20px;font-weight:300;color:var(--ink)}
+.pc-n{font-size:8px;color:var(--muted);margin-top:3px;line-height:1.4}
+
+/* Validity banner */
+.vb{background:var(--brand);padding:7px 12px;border-radius:2px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.vb-l{font-size:8px;color:rgba(255,255,255,0.45);flex:1}
+.vb-r{font-family:var(--serif);font-size:11px;font-style:italic;color:#F5EFE0;white-space:nowrap}
+
+/* Notes */
+.nb{background:var(--sand);border-left:3px solid var(--terra);padding:7px 11px;margin-bottom:12px;font-size:9.5px;color:var(--ink-s);line-height:1.6}
+
+/* Doc footer */
+.df{border-top:1px solid var(--border);padding:9px 26px;display:flex;justify-content:space-between;align-items:center;font-size:8px;color:var(--muted)}
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <div>
+    <div class="app-logo">Sri Maadan <span>Yatra</span></div>
+    <div class="app-sub">Quotation Generator</div>
+  </div>
+  <div class="app-actions">
+    <button class="btn btn-ghost" onclick="clearForm()">Clear</button>
+    <button class="btn btn-primary" id="pdf-btn" onclick="generatePDF()">&#8595; Download PDF</button>
+  </div>
+</div>
+
+<div class="workspace">
+
+<!-- FORM PANEL -->
+<div class="form-panel">
+
+  <div class="fsec">
+    <div class="fsec-title">Quotation</div>
+    <div class="r2">
+      <div class="f"><label>Number</label><input type="text" id="qt-num" value="QT-2025-001"></div>
+      <div class="f"><label>Date</label><input type="date" id="qt-date"></div>
+    </div>
+    <div class="f"><label>Valid until</label><input type="date" id="qt-valid"></div>
+  </div>
+
+  <div class="fsec">
+    <div class="fsec-title">Customer</div>
+    <div class="f"><label>Full name</label><input type="text" id="cust-name" placeholder="As on passport"></div>
+    <div class="r2">
+      <div class="f"><label>Email</label><input type="email" id="cust-email" placeholder="email@example.com"></div>
+      <div class="f"><label>Phone</label><input type="tel" id="cust-phone" placeholder="+91 98XXX XXXXX"></div>
+    </div>
+  </div>
+
+  <div class="fsec">
+    <div class="fsec-title">Trip</div>
+    <div class="f"><label>Destination</label><input type="text" id="trip-dest" placeholder="e.g. Santorini, Greece"></div>
+    <div class="r2">
+      <div class="f"><label>Departure</label><input type="date" id="trip-from"></div>
+      <div class="f"><label>Return</label><input type="date" id="trip-to"></div>
+    </div>
+    <div class="r3">
+      <div class="f"><label>Adults</label><input type="number" id="trip-adults" min="1" value="2"></div>
+      <div class="f"><label>Children</label><input type="number" id="trip-children" min="0" value="0"></div>
+      <div class="f"><label>Nights</label><input type="number" id="trip-nights" min="1" value="7"></div>
+    </div>
+    <div class="f"><label>Package type</label><input type="text" id="trip-type" placeholder="e.g. Luxury Honeymoon"></div>
+    <div class="f"><label>Consultant name</label><input type="text" id="consultant" placeholder="Your name"></div>
+  </div>
+
+  <div class="fsec">
+    <div class="fsec-title">Pricing</div>
+    <div class="li-hdr">
+      <span>Component</span><span>Details</span><span style="text-align:right">Amount</span><span></span>
+    </div>
+    <div id="li-wrap"></div>
+    <button class="add-btn" onclick="addLI()">+ Add component</button>
+  </div>
+
+  <div class="fsec">
+    <div class="fsec-title">Inclusions</div>
+    <div class="inc-g" id="inc-g">
+      <label class="inc-cb"><input type="checkbox" data-label="Return flights" checked> Return flights</label>
+      <label class="inc-cb"><input type="checkbox" data-label="Hotel and breakfast" checked> Hotel &amp; breakfast</label>
+      <label class="inc-cb"><input type="checkbox" data-label="All transfers" checked> All transfers</label>
+      <label class="inc-cb"><input type="checkbox" data-label="Travel insurance" checked> Travel insurance</label>
+      <label class="inc-cb"><input type="checkbox" data-label="24/7 support" checked> 24/7 support</label>
+      <label class="inc-cb"><input type="checkbox" data-label="Airport assistance"> Airport assistance</label>
+      <label class="inc-cb"><input type="checkbox" data-label="Guided tours"> Guided tours</label>
+      <label class="inc-cb"><input type="checkbox" data-label="Visa assistance"> Visa assistance</label>
+    </div>
+    <div class="f" style="margin-top:0.5rem">
+      <label>Not included (comma separated)</label>
+      <input type="text" id="not-inc" placeholder="Visa fees, personal meals, tips">
+    </div>
+  </div>
+
+  <div class="fsec">
+    <div class="fsec-title">Itinerary</div>
+    <div id="itin-wrap"></div>
+    <button class="add-btn" onclick="addDay()">+ Add day</button>
+  </div>
+
+  <div class="fsec">
+    <div class="fsec-title">Payment</div>
+    <div class="r2">
+      <div class="f"><label>Non-refundable amount (&#8377;)</label><input type="number" id="non-ref" placeholder="e.g. 20000"></div>
+      <div class="f"><label>Balance due date</label><input type="date" id="bal-date"></div>
+    </div>
+  </div>
+
+  <div class="fsec">
+    <div class="fsec-title">Special notes</div>
+    <div class="f"><textarea id="notes" rows="3" placeholder="Visa timeline, flight notes, special requests..."></textarea></div>
+  </div>
+
+</div><!-- /form-panel -->
+
+<!-- PREVIEW PANEL -->
+<div class="preview-panel">
+  <div class="preview-toolbar">
+    <span class="prev-lbl">Live preview</span>
+    <span class="prev-lbl" id="total-lbl">Total: &#8377;0</span>
+  </div>
+  <div class="preview-scroll" id="preview-scroll">
+    <div class="doc-scale-wrap" id="doc-scale-wrap">
+      <div id="qdoc">
+
+        <div class="dh">
+          <div>
+            <div class="dh-logo">Sri Maadan Yatra</div>
+            <div class="dh-tag">Curated Travel Experiences</div>
+          </div>
+          <div class="dh-r">
+            <div class="dh-rlbl">Travel Quotation</div>
+            <div class="dh-num" id="d-num">QT-2025-001</div>
+            <div class="dh-date" id="d-date">Date: —</div>
+            <div class="dh-valid" id="d-valid">Valid until: —</div>
+          </div>
+        </div>
+
+        <div class="db">
+
+          <div class="mg">
+            <div class="mg-cell">
+              <div class="mg-l">Prepared for</div>
+              <div class="mg-v" id="d-cname">Customer Name</div>
+              <div class="mg-s" id="d-contact">—</div>
+            </div>
+            <div class="mg-cell">
+              <div class="mg-l">Destination</div>
+              <div class="mg-v" id="d-dest">Destination</div>
+              <div class="mg-s" id="d-dates">—</div>
+            </div>
+            <div class="mg-cell" style="padding-bottom:0">
+              <div class="mg-l">Package type</div>
+              <div class="mg-v" id="d-pkg">—</div>
+            </div>
+            <div class="mg-cell" style="padding-bottom:0">
+              <div class="mg-l">Prepared by</div>
+              <div class="mg-v" id="d-cons">—</div>
+              <div class="mg-s">Sri Maadan Yatra</div>
+            </div>
+          </div>
+
+          <span class="ds">Pricing breakdown</span>
+          <table class="pt">
+            <thead>
+              <tr>
+                <th>Component</th>
+                <th>Details</th>
+                <th>Amount (&#8377;)</th>
+              </tr>
+            </thead>
+            <tbody id="d-li"></tbody>
+            <tfoot>
+              <tr>
+                <td colspan="2"><strong>Total quoted amount</strong><br><span style="font-size:8px;color:var(--muted);font-weight:300">Inclusive of all taxes and charges</span></td>
+                <td class="pt-tot" id="d-total">&#8377;0</td>
+              </tr>
+            </tfoot>
+          </table>
+
+          <span class="ds">What's included</span>
+          <div class="inc-doc" id="d-inc"></div>
+          <div style="margin-bottom:12px;font-size:9.5px">
+            <span style="color:var(--terra);font-weight:500">Not included: </span>
+            <span id="d-notinc" style="color:var(--muted)">—</span>
+          </div>
+
+          <span class="ds">Day-by-day itinerary</span>
+          <table class="it" id="d-itin">
+            <tr><td colspan="2" style="color:var(--muted);padding:10px;font-size:9px">No itinerary added yet</td></tr>
+          </table>
+
+          <span class="ds">Payment schedule</span>
+          <div class="pg">
+            <div class="pc prim">
+              <div class="pc-l acc">Deposit due now (50%)</div>
+              <div class="pc-a" id="d-dep">&#8377;0</div>
+              <div class="pc-n" id="d-dep-note">GPay to business UPI to confirm booking</div>
+            </div>
+            <div class="pc">
+              <div class="pc-l">Balance due by</div>
+              <div class="pc-a" id="d-bal">&#8377;0</div>
+              <div class="pc-n" id="d-bal-note">30 days before departure</div>
+            </div>
+          </div>
+
+          <div class="vb">
+            <span class="vb-l" id="d-vtext">This quotation is held for you until —. After this date, pricing may change.</span>
+            <span class="vb-r">Questions? Call or WhatsApp us.</span>
+          </div>
+
+          <div class="nb" id="d-notes" style="display:none"></div>
+
+        </div><!-- /db -->
+
+        <div class="df">
+          <span>Sri Maadan Yatra &nbsp;&#183;&nbsp; hello@srimaadanyatra.com &nbsp;&#183;&nbsp; +91 96007 77266 &nbsp;&#183;&nbsp; srimaadanyatra.com</span>
+          <span style="color:var(--terra)">TAAI Member</span>
+        </div>
+
+      </div><!-- /#qdoc -->
+    </div><!-- /doc-scale-wrap -->
+  </div><!-- /preview-scroll -->
+</div><!-- /preview-panel -->
+
+</div><!-- /workspace -->
+
+<script>
+/* ── STATE ── */
+var lineItems = [
+  {desc:'International flights', detail:'Return, Economy', amt:''},
+  {desc:'Hotel accommodation',   detail:'Nights + Breakfast', amt:''},
+  {desc:'All transfers',         detail:'Airport and inter-city', amt:''},
+  {desc:'Service fee',           detail:'Itinerary and 24/7 support', amt:''}
+];
+var itinDays = [
+  {title:'Day 1: Arrival and check-in', desc:''},
+  {title:'Day 2: Exploration', desc:''}
+];
+
+/* ── UTILS ── */
+function esc(s){
+  return String(s||'')
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+}
+function gv(id){
+  var e=document.getElementById(id);
+  return e ? e.value : '';
+}
+function fmtDate(s){
+  if(!s) return '—';
+  var d=new Date(s+'T00:00:00');
+  return d.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
+}
+function fmtAmt(n){
+  var v=parseFloat(n)||0;
+  if(!v) return '—';
+  return '\u20B9'+v.toLocaleString('en-IN');
+}
+function fmtAmtRaw(n){
+  var v=parseFloat(n)||0;
+  return '\u20B9'+v.toLocaleString('en-IN');
+}
+
+/* ── SCALE PREVIEW ── */
+function scalePreview(){
+  var scroll=document.getElementById('preview-scroll');
+  var wrap=document.getElementById('doc-scale-wrap');
+  var available=scroll.clientWidth - 32;
+  var docWidth=794;
+  var scale=Math.min(1, available/docWidth);
+  wrap.style.transform='scale('+scale+')';
+  wrap.style.width=docWidth+'px';
+  wrap.style.marginBottom=(docWidth * scale - docWidth)+'px';
+}
+
+/* ── RENDER LINE ITEMS ── */
+function renderLI(){
+  var html='';
+  for(var i=0;i<lineItems.length;i++){
+    var li=lineItems[i];
+    html+='<div class="li-row">';
+    html+='<input type="text" value="'+esc(li.desc)+'" placeholder="Component" data-i="'+i+'" data-f="desc">';
+    html+='<input type="text" value="'+esc(li.detail)+'" placeholder="Details" data-i="'+i+'" data-f="detail">';
+    html+='<input type="number" value="'+esc(li.amt)+'" placeholder="0" min="0" data-i="'+i+'" data-f="amt" style="text-align:right">';
+    html+='<button class="rm-btn" onclick="removeLI('+i+')">&times;</button>';
+    html+='</div>';
+  }
+  document.getElementById('li-wrap').innerHTML=html;
+  var inputs=document.querySelectorAll('#li-wrap input');
+  for(var j=0;j<inputs.length;j++){
+    inputs[j].addEventListener('input', function(e){
+      var el=e.target;
+      lineItems[+el.getAttribute('data-i')][el.getAttribute('data-f')]=el.value;
+      render();
+    });
+  }
+}
+function addLI(){ lineItems.push({desc:'',detail:'',amt:''}); renderLI(); render(); }
+function removeLI(i){ lineItems.splice(i,1); renderLI(); render(); }
+
+/* ── RENDER ITINERARY ── */
+function renderItin(){
+  var html='';
+  for(var i=0;i<itinDays.length;i++){
+    var d=itinDays[i];
+    html+='<div class="iday">';
+    html+='<div class="iday-hd"><span class="iday-lbl">Day '+(i+1)+'</span><button class="rm-btn" onclick="removeDay('+i+')">&times;</button></div>';
+    html+='<div class="f"><input type="text" value="'+esc(d.title)+'" placeholder="Day title" data-i="'+i+'" data-f="title"></div>';
+    html+='<div class="f"><textarea rows="2" placeholder="Activities, meals, accommodation..." data-i="'+i+'" data-f="desc">'+esc(d.desc)+'</textarea></div>';
+    html+='</div>';
+  }
+  document.getElementById('itin-wrap').innerHTML=html;
+  var inputs=document.querySelectorAll('#itin-wrap input, #itin-wrap textarea');
+  for(var j=0;j<inputs.length;j++){
+    inputs[j].addEventListener('input', function(e){
+      var el=e.target;
+      itinDays[+el.getAttribute('data-i')][el.getAttribute('data-f')]=el.value;
+      render();
+    });
+  }
+}
+function addDay(){ itinDays.push({title:'',desc:''}); renderItin(); render(); }
+function removeDay(i){ itinDays.splice(i,1); renderItin(); render(); }
+
+/* ── MAIN RENDER ── */
+function render(){
+  /* Header */
+  setText('d-num',  gv('qt-num')||'—');
+  setText('d-date', 'Date: '+fmtDate(gv('qt-date')));
+  setText('d-valid','Valid until: '+fmtDate(gv('qt-valid')));
+  setText('d-vtext','This quotation is held for you until '+fmtDate(gv('qt-valid'))+'. After this date, pricing may change.');
+
+  /* Customer */
+  setText('d-cname', gv('cust-name')||'Customer Name');
+  var contact=[gv('cust-email'),gv('cust-phone')].filter(Boolean).join('  \u00B7  ');
+  setText('d-contact', contact||'—');
+
+  /* Trip */
+  setText('d-dest', gv('trip-dest')||'Destination');
+  var adults   = parseInt(gv('trip-adults'))||2;
+  var children = parseInt(gv('trip-children'))||0;
+  var nights   = parseInt(gv('trip-nights'))||7;
+  var pax = adults+' adult'+(adults!==1?'s':'')+(children>0?', '+children+' child'+(children!==1?'ren':''):'');
+  var df=fmtDate(gv('trip-from')), dt=fmtDate(gv('trip-to'));
+  var dstr=(df!=='—'&&dt!=='—'?df+' \u2013 '+dt:df!=='—'?df:'—')+' \u00B7 '+nights+' nights \u00B7 '+pax;
+  setText('d-dates', dstr);
+  setText('d-pkg',  gv('trip-type')||'—');
+  setText('d-cons', gv('consultant')||'—');
+
+  /* Line items */
+  var total=0;
+  var rows='';
+  for(var i=0;i<lineItems.length;i++){
+    var li=lineItems[i];
+    if(!li.desc && !li.amt) continue;
+    var amt=parseFloat(li.amt)||0;
+    total+=amt;
+    rows+='<tr>';
+    rows+='<td>'+esc(li.desc||'—')+'</td>';
+    rows+='<td style="color:var(--muted);font-size:9px">'+esc(li.detail||'')+'</td>';
+    rows+='<td>'+fmtAmt(amt)+'</td>';
+    rows+='</tr>';
+  }
+  document.getElementById('d-li').innerHTML = rows||'<tr><td colspan="3" style="color:var(--muted);text-align:center;padding:10px;font-size:9px">No components added</td></tr>';
+  document.getElementById('d-total').textContent = '\u20B9'+total.toLocaleString('en-IN');
+  document.getElementById('total-lbl').textContent = 'Total: \u20B9'+total.toLocaleString('en-IN');
+
+  /* Payments */
+  var dep=total/2, bal=total/2;
+  setText('d-dep', '\u20B9'+dep.toLocaleString('en-IN'));
+  setText('d-bal', '\u20B9'+bal.toLocaleString('en-IN'));
+  var nr=parseFloat(gv('non-ref'))||0;
+  setText('d-dep-note', 'GPay to business UPI'+(nr?' \u00B7 \u20B9'+nr.toLocaleString('en-IN')+' is non-refundable':''));
+  setText('d-bal-note', 'Due by '+fmtDate(gv('bal-date'))+' \u00B7 30 days before departure');
+
+  /* Inclusions — use data-label attribute to avoid &amp; issues */
+  var cbs=document.querySelectorAll('#inc-g .inc-cb input[type=checkbox]');
+  var incHtml='';
+  for(var j=0;j<cbs.length;j++){
+    var yes=cbs[j].checked;
+    var lbl=cbs[j].getAttribute('data-label')||cbs[j].parentElement.textContent.trim();
+    incHtml+='<div class="idc">';
+    incHtml+='<div class="idd '+(yes?'idd-y':'idd-n')+'">';
+    incHtml+=yes?'<div class="tick"></div>':'<div class="xmark">\u00D7</div>';
+    incHtml+='</div>';
+    incHtml+=esc(lbl);
+    incHtml+='</div>';
+  }
+  document.getElementById('d-inc').innerHTML=incHtml;
+  setText('d-notinc', gv('not-inc')||'—');
+
+  /* Itinerary */
+  var itinHtml='';
+  for(var k=0;k<itinDays.length;k++){
+    var day=itinDays[k];
+    if(!day.title&&!day.desc) continue;
+    itinHtml+='<tr>';
+    itinHtml+='<td style="width:48px;padding-right:0"><div class="dbadge">DAY '+(k+1)+'</div></td>';
+    itinHtml+='<td>';
+    itinHtml+='<div class="it-t">'+esc(day.title||'Day '+(k+1))+'</div>';
+    if(day.desc) itinHtml+='<div class="it-d">'+esc(day.desc)+'</div>';
+    itinHtml+='</td></tr>';
+  }
+  document.getElementById('d-itin').innerHTML = itinHtml||'<tr><td colspan="2" style="color:var(--muted);padding:10px;font-size:9px">No itinerary added yet</td></tr>';
+
+  /* Notes */
+  var notes=gv('notes');
+  var nel=document.getElementById('d-notes');
+  nel.style.display=notes?'block':'none';
+  nel.textContent=notes;
+}
+
+function setText(id,val){
+  var el=document.getElementById(id);
+  if(el) el.textContent=val;
+}
+
+/* ── BIND INPUTS ── */
+function bindInputs(){
+  var ids=['qt-num','qt-date','qt-valid','cust-name','cust-email','cust-phone',
+           'trip-dest','trip-from','trip-to','trip-adults','trip-children','trip-nights',
+           'trip-type','consultant','not-inc','non-ref','bal-date','notes'];
+  for(var i=0;i<ids.length;i++){
+    var el=document.getElementById(ids[i]);
+    if(el) el.addEventListener('input',render);
+  }
+  var cbs=document.querySelectorAll('#inc-g input[type=checkbox]');
+  for(var j=0;j<cbs.length;j++){
+    cbs[j].addEventListener('change',render);
+  }
+}
+
+/* ── PDF ── */
+function generatePDF(){
+  var wrap=document.getElementById('doc-scale-wrap');
+  var saved=wrap.style.transform;
+  wrap.style.transform='none';
+
+  var custName=(gv('cust-name')||'Customer').replace(/\s+/g,'_');
+  var dest=(gv('trip-dest')||'Trip').replace(/\s+/g,'_');
+  var qtNum=(gv('qt-num')||'QT').replace(/\s+/g,'_');
+  var filename=qtNum+'_'+custName+'_'+dest+'.pdf';
+
+  var btn=document.getElementById('pdf-btn');
+  btn.textContent='Generating...';
+  btn.disabled=true;
+
+  var opt={
+    margin:0,
+    filename:filename,
+    image:{type:'jpeg',quality:0.98},
+    html2canvas:{scale:2,useCORS:true,letterRendering:true,windowWidth:794},
+    jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},
+    pagebreak:{mode:'css'}
+  };
+
+  html2pdf().set(opt).from(document.getElementById('qdoc')).save().then(function(){
+    wrap.style.transform=saved;
+    btn.innerHTML='&#8595; Download PDF';
+    btn.disabled=false;
+  });
+}
+
+/* ── CLEAR ── */
+function clearForm(){
+  if(!confirm('Clear all form data?')) return;
+  ['cust-name','cust-email','cust-phone','trip-dest','trip-type',
+   'consultant','notes','not-inc','non-ref'].forEach(function(id){
+    var el=document.getElementById(id); if(el) el.value='';
+  });
+  lineItems=[{desc:'',detail:'',amt:''},{desc:'',detail:'',amt:''}];
+  itinDays=[{title:'',desc:''},{title:'',desc:''}];
+  renderLI(); renderItin(); render();
+}
+
+/* ── INIT ── */
+window.addEventListener('DOMContentLoaded',function(){
+  function fmt(d){return d.toISOString().split('T')[0];}
+  var today=new Date();
+  document.getElementById('qt-date').value=fmt(today);
+  var valid=new Date(today); valid.setDate(today.getDate()+14);
+  document.getElementById('qt-valid').value=fmt(valid);
+  var dep=new Date(today); dep.setMonth(today.getMonth()+2);
+  document.getElementById('trip-from').value=fmt(dep);
+  var ret=new Date(dep); ret.setDate(dep.getDate()+8);
+  document.getElementById('trip-to').value=fmt(ret);
+  var balD=new Date(dep); balD.setDate(dep.getDate()-30);
+  document.getElementById('bal-date').value=fmt(balD);
+
+  bindInputs();
+  renderLI();
+  renderItin();
+  render();
+  scalePreview();
+});
+
+window.addEventListener('resize', scalePreview);
+</script>
+</body>
+</html>
