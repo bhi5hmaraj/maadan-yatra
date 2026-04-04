@@ -9,6 +9,8 @@
 }
 #qdoc{background:#fff;width:794px;font-family:var(--sans);color:var(--ink);font-size:11px;line-height:1.5}
 .dh{background:var(--brand);padding:16px 26px;display:flex;justify-content:space-between;align-items:center}
+.dh-brand{display:flex;align-items:center;gap:12px;min-width:0}
+.dh-logo-image{width:48px;height:48px;object-fit:contain;flex-shrink:0}
 .dh-logo{font-family:var(--serif);font-size:22px;font-weight:600;color:#fff;line-height:1}
 .dh-tag{font-size:7px;letter-spacing:0.2em;text-transform:uppercase;color:rgba(255,255,255,0.35);margin-top:2px}
 .dh-r{text-align:right}

@@ -122,9 +122,12 @@ export const QuotationDocument = forwardRef<HTMLDivElement, QuotationDocumentPro
       <div id="qdoc" ref={ref}>
         {/* Header */}
         <div className="dh">
-          <div>
-            <div className="dh-logo">Sri Maadan Yatra</div>
-            <div className="dh-tag">Curated Travel Experiences</div>
+          <div className="dh-brand">
+            <img className="dh-logo-image" src="/logo.png" alt="Sri Maadan Yatra logo" />
+            <div>
+              <div className="dh-logo">Sri Maadan Yatra</div>
+              <div className="dh-tag">Curated Travel Experiences</div>
+            </div>
           </div>
           <div className="dh-r">
             <div className="dh-rlbl">Travel Quotation</div>
