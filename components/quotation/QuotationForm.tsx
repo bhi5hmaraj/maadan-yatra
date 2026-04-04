@@ -12,6 +12,7 @@ import {
   Row,
   Col,
   Card,
+  Grid,
 } from 'antd';
 import { PlusOutlined, DeleteOutlined } from '@ant-design/icons';
 import type { FormInstance } from 'antd/es/form';
@@ -20,6 +21,7 @@ import { DEFAULT_INCLUSIONS } from '@/types/quotation';
 import dayjs from 'dayjs';
 
 const { TextArea } = Input;
+const { useBreakpoint } = Grid;
 
 interface QuotationFormProps {
   form: FormInstance;
@@ -32,6 +34,10 @@ export function QuotationForm({
   initialValues,
   onValuesChange,
 }: QuotationFormProps) {
+  const screens = useBreakpoint();
+  const isMobile = !screens.md;
+  const pricingGridTemplate = isMobile ? '1fr' : '1fr 100px 80px 32px';
+
   return (
     <Form
       form={form}
@@ -47,12 +53,12 @@ export function QuotationForm({
         style={{ marginBottom: 16 }}
       >
         <Row gutter={12}>
-          <Col span={12}>
+          <Col xs={24} md={12}>
             <Form.Item label="Number" name="number" rules={[{ required: true }]}>
               <Input placeholder="QT-2025-001" />
             </Form.Item>
           </Col>
-          <Col span={12}>
+          <Col xs={24} md={12}>
             <Form.Item label="Date" name="date" rules={[{ required: true }]}>
               <DatePicker style={{ width: '100%' }} format="DD MMM YYYY" />
             </Form.Item>
@@ -83,12 +89,12 @@ export function QuotationForm({
           <Input placeholder="As on passport" />
         </Form.Item>
         <Row gutter={12}>
-          <Col span={12}>
+          <Col xs={24} md={12}>
             <Form.Item label="Email" name={['customer', 'email']}>
               <Input type="email" placeholder="email@example.com" />
             </Form.Item>
           </Col>
-          <Col span={12}>
+          <Col xs={24} md={12}>
             <Form.Item label="Phone" name={['customer', 'phone']}>
               <Input placeholder="+91 98XXX XXXXX" />
             </Form.Item>
@@ -106,29 +112,29 @@ export function QuotationForm({
           <Input placeholder="e.g. Santorini, Greece" />
         </Form.Item>
         <Row gutter={12}>
-          <Col span={12}>
+          <Col xs={24} md={12}>
             <Form.Item label="Departure" name={['trip', 'departureDate']}>
               <DatePicker style={{ width: '100%' }} format="DD MMM YYYY" />
             </Form.Item>
           </Col>
-          <Col span={12}>
+          <Col xs={24} md={12}>
             <Form.Item label="Return" name={['trip', 'returnDate']}>
               <DatePicker style={{ width: '100%' }} format="DD MMM YYYY" />
             </Form.Item>
           </Col>
         </Row>
         <Row gutter={12}>
-          <Col span={8}>
+          <Col xs={24} sm={8}>
             <Form.Item label="Adults" name={['trip', 'adults']}>
               <InputNumber min={1} style={{ width: '100%' }} />
             </Form.Item>
           </Col>
-          <Col span={8}>
+          <Col xs={24} sm={8}>
             <Form.Item label="Children" name={['trip', 'children']}>
               <InputNumber min={0} style={{ width: '100%' }} />
             </Form.Item>
           </Col>
-          <Col span={8}>
+          <Col xs={24} sm={8}>
             <Form.Item label="Nights" name={['trip', 'nights']}>
               <InputNumber min={1} style={{ width: '100%' }} />
             </Form.Item>
@@ -148,12 +154,14 @@ export function QuotationForm({
         title={<span style={{ color: '#C4622D', fontSize: '12px', letterSpacing: '0.1em' }}>PRICING</span>}
         style={{ marginBottom: 16 }}
       >
-        <div style={{ marginBottom: 8, display: 'grid', gridTemplateColumns: '1fr 100px 80px 32px', gap: 8 }}>
-          <span style={{ fontSize: 11, color: '#7A6E60', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Component</span>
-          <span style={{ fontSize: 11, color: '#7A6E60', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Details</span>
-          <span style={{ fontSize: 11, color: '#7A6E60', textTransform: 'uppercase', letterSpacing: '0.08em', textAlign: 'right' }}>Amount</span>
-          <span></span>
-        </div>
+        {!isMobile ? (
+          <div style={{ marginBottom: 8, display: 'grid', gridTemplateColumns: pricingGridTemplate, gap: 8 }}>
+            <span style={{ fontSize: 11, color: '#7A6E60', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Component</span>
+            <span style={{ fontSize: 11, color: '#7A6E60', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Details</span>
+            <span style={{ fontSize: 11, color: '#7A6E60', textTransform: 'uppercase', letterSpacing: '0.08em', textAlign: 'right' }}>Amount</span>
+            <span></span>
+          </div>
+        ) : null}
         <Form.List name="lineItems">
           {(fields, { add, remove }) => (
             <>
@@ -162,19 +170,38 @@ export function QuotationForm({
                   key={key}
                   style={{
                     display: 'grid',
-                    gridTemplateColumns: '1fr 100px 80px 32px',
+                    gridTemplateColumns: pricingGridTemplate,
                     gap: 8,
                     marginBottom: 8,
                     alignItems: 'start',
+                    padding: isMobile ? 12 : 0,
+                    background: isMobile ? '#F7F4EE' : 'transparent',
+                    border: isMobile ? '1px solid #E0DDD5' : 'none',
+                    borderRadius: isMobile ? 6 : 0,
                   }}
                 >
-                  <Form.Item {...restField} name={[name, 'desc']} style={{ marginBottom: 0 }}>
+                  <Form.Item
+                    {...restField}
+                    label={isMobile ? 'Component' : undefined}
+                    name={[name, 'desc']}
+                    style={{ marginBottom: 0 }}
+                  >
                     <Input placeholder="Component" size="small" />
                   </Form.Item>
-                  <Form.Item {...restField} name={[name, 'detail']} style={{ marginBottom: 0 }}>
+                  <Form.Item
+                    {...restField}
+                    label={isMobile ? 'Details' : undefined}
+                    name={[name, 'detail']}
+                    style={{ marginBottom: 0 }}
+                  >
                     <Input placeholder="Details" size="small" />
                   </Form.Item>
-                  <Form.Item {...restField} name={[name, 'amt']} style={{ marginBottom: 0 }}>
+                  <Form.Item
+                    {...restField}
+                    label={isMobile ? 'Amount' : undefined}
+                    name={[name, 'amt']}
+                    style={{ marginBottom: 0 }}
+                  >
                     <InputNumber
                       placeholder="0"
                       min={0}
@@ -188,7 +215,10 @@ export function QuotationForm({
                     size="small"
                     icon={<DeleteOutlined />}
                     onClick={() => remove(name)}
-                    style={{ marginTop: 2 }}
+                    style={{
+                      marginTop: isMobile ? 0 : 2,
+                      justifySelf: isMobile ? 'end' : 'stretch',
+                    }}
                   />
                 </div>
               ))}
@@ -216,7 +246,7 @@ export function QuotationForm({
           <Checkbox.Group style={{ width: '100%' }}>
             <Row gutter={[8, 8]}>
               {DEFAULT_INCLUSIONS.map((item) => (
-                <Col span={12} key={item}>
+                <Col xs={24} sm={12} key={item}>
                   <Checkbox value={item} style={{ fontSize: 13 }}>
                     {item}
                   </Checkbox>
@@ -295,12 +325,12 @@ export function QuotationForm({
         style={{ marginBottom: 16 }}
       >
         <Row gutter={12}>
-          <Col span={12}>
+          <Col xs={24} md={12}>
             <Form.Item label="Non-refundable amount (₹)" name={['payment', 'nonRefundable']}>
               <InputNumber min={0} placeholder="e.g. 20000" style={{ width: '100%' }} />
             </Form.Item>
           </Col>
-          <Col span={12}>
+          <Col xs={24} md={12}>
             <Form.Item label="Balance due date" name={['payment', 'balanceDueDate']}>
               <DatePicker style={{ width: '100%' }} format="DD MMM YYYY" />
             </Form.Item>

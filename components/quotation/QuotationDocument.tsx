@@ -234,7 +234,7 @@ export const QuotationDocument = forwardRef<HTMLDivElement, QuotationDocumentPro
         {/* Footer */}
         <div className="df">
           <span>
-            Sri Maadan Yatra &nbsp;·&nbsp; hello@srimaadanyatra.com &nbsp;·&nbsp; +91 96007 77266
+            Sri Maadan Yatra &nbsp;·&nbsp; srimaadanyatra@gmail.com &nbsp;·&nbsp; +91 96007 77266
             &nbsp;·&nbsp; srimaadanyatra.com
           </span>
           <span style={{ color: 'var(--terra)' }}>TAAI Member</span>

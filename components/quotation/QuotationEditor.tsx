@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Button, Card, Flex, Form, Modal, Space, Typography, message } from 'antd';
+import { Button, Card, Flex, Form, Grid, Modal, Space, Typography, message } from 'antd';
 import { ArrowLeftOutlined, EyeOutlined, DownloadOutlined, SaveOutlined } from '@ant-design/icons';
 import { useGo, useList } from '@refinedev/core';
 import {
@@ -17,6 +17,7 @@ import { generateQuotationNumber } from '@/utils/formatting';
 import { generatePDF } from '@/utils/pdf';
 
 const { Paragraph, Title } = Typography;
+const { useBreakpoint } = Grid;
 
 interface QuotationEditorProps {
   mode: 'create' | 'edit';
@@ -38,6 +39,8 @@ export function QuotationEditor({
   const modalDocumentRef = useRef<HTMLDivElement>(null);
   const [messageApi, contextHolder] = message.useMessage();
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const screens = useBreakpoint();
+  const isMobile = !screens.md;
 
   const { data: quotationsData } = useList<Quotation>({
     resource: 'quotations',
@@ -74,7 +77,7 @@ export function QuotationEditor({
   );
 
   const description = mode === 'create'
-    ? 'Compose the quotation on the left and review the generated document on the right before saving.'
+    ? 'Compose the quotation and open the preview when you want to review the generated document.'
     : 'Update the saved quotation and verify the document layout before saving changes.';
 
   const handleValuesChange = (_changedValues: unknown, allValues: unknown) => {
@@ -129,8 +132,8 @@ export function QuotationEditor({
     <>
       {contextHolder}
       <div className="app-shell-page">
-        <Flex justify="space-between" align="center" wrap="wrap" gap={12}>
-          <div>
+        <Flex justify="space-between" align={isMobile ? 'stretch' : 'center'} vertical={isMobile} wrap gap={12}>
+          <div style={{ minWidth: 0 }}>
             <Button
               type="link"
               icon={<ArrowLeftOutlined />}
@@ -146,20 +149,20 @@ export function QuotationEditor({
               {description}
             </Paragraph>
           </div>
-          <Space>
-            <Button icon={<EyeOutlined />} onClick={() => setIsPreviewOpen(true)}>
+          <Space direction={isMobile ? 'vertical' : 'horizontal'} style={isMobile ? { width: '100%' } : undefined}>
+            <Button block={isMobile} icon={<EyeOutlined />} onClick={() => setIsPreviewOpen(true)}>
               Preview
             </Button>
-            <Button icon={<DownloadOutlined />} onClick={handleDownload}>
+            <Button block={isMobile} icon={<DownloadOutlined />} onClick={handleDownload}>
               Download PDF
             </Button>
-            <Button type="primary" icon={<SaveOutlined />} loading={saving} onClick={handleSave}>
+            <Button block={isMobile} type="primary" icon={<SaveOutlined />} loading={saving} onClick={handleSave}>
               {mode === 'create' ? 'Save quotation' : 'Save changes'}
             </Button>
           </Space>
         </Flex>
 
-        <Card bodyStyle={{ padding: 20 }}>
+        <Card bodyStyle={{ padding: isMobile ? 14 : 20 }}>
           <QuotationForm
             form={form}
             initialValues={initialQuotation ?? createDefaultQuotation()}
@@ -174,19 +177,22 @@ export function QuotationEditor({
         open={isPreviewOpen}
         onCancel={() => setIsPreviewOpen(false)}
         footer={[
-          <Button key="download" icon={<DownloadOutlined />} onClick={handleDownload}>
+          <Button key="download" block={isMobile} icon={<DownloadOutlined />} onClick={handleDownload}>
             Download PDF
           </Button>,
-          <Button key="close" type="primary" onClick={() => setIsPreviewOpen(false)}>
+          <Button key="close" block={isMobile} type="primary" onClick={() => setIsPreviewOpen(false)}>
             Close
           </Button>,
         ]}
-        width="min(1120px, 96vw)"
+        width={isMobile ? '100vw' : 1120}
+        style={isMobile ? { top: 0, paddingBottom: 0, maxWidth: '100vw' } : undefined}
         styles={{
+          content: isMobile ? { padding: 0 } : undefined,
           body: {
-            padding: 16,
+            padding: isMobile ? 8 : 16,
             background: '#b8b4ad',
           },
+          footer: isMobile ? { display: 'grid', gap: 8 } : undefined,
         }}
       >
         <QuotationPreview quotation={previewData} documentRef={modalDocumentRef} />

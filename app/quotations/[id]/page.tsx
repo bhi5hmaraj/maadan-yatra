@@ -2,7 +2,7 @@
 
 import React, { useRef } from 'react';
 import Link from 'next/link';
-import { Button, Descriptions, Skeleton, Space, Tag, Typography, message } from 'antd';
+import { Button, Descriptions, Grid, Skeleton, Space, Tag, Typography, message } from 'antd';
 import { ArrowLeftOutlined, DownloadOutlined, EditOutlined } from '@ant-design/icons';
 import { useParams } from 'next/navigation';
 import { useOne } from '@refinedev/core';
@@ -12,11 +12,14 @@ import { calculateTotal, formatAmountRaw, formatDate } from '@/utils/formatting'
 import { generatePDF } from '@/utils/pdf';
 
 const { Paragraph, Title } = Typography;
+const { useBreakpoint } = Grid;
 
 export default function ShowQuotationPage() {
   const params = useParams<{ id: string }>();
   const documentRef = useRef<HTMLDivElement>(null);
   const [messageApi, contextHolder] = message.useMessage();
+  const screens = useBreakpoint();
+  const isMobile = !screens.md;
   const { data, isLoading, isError } = useOne<Quotation>({
     resource: 'quotations',
     id: params.id,
@@ -57,12 +60,12 @@ export default function ShowQuotationPage() {
           <Paragraph type="secondary">
             Review the generated quotation and export the PDF when ready to share with the customer.
           </Paragraph>
-          <Space wrap>
-            <Button type="primary" icon={<DownloadOutlined />} onClick={handleDownload}>
+          <Space wrap direction={isMobile ? 'vertical' : 'horizontal'} style={isMobile ? { width: '100%' } : undefined}>
+            <Button block={isMobile} type="primary" icon={<DownloadOutlined />} onClick={handleDownload}>
               Download PDF
             </Button>
             <Link href={`/quotations/edit/${quotation.id}`}>
-              <Button icon={<EditOutlined />}>Edit quotation</Button>
+              <Button block={isMobile} icon={<EditOutlined />}>Edit quotation</Button>
             </Link>
             <Tag>{quotation.status.toUpperCase()}</Tag>
           </Space>

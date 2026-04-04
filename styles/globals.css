@@ -22,11 +22,13 @@ a {
   display: flex;
   flex-direction: column;
   gap: 24px;
+  min-width: 0;
 }
 
 .document-page {
   display: flex;
   justify-content: center;
+  min-width: 0;
 }
 
 .document-page__frame {
@@ -45,7 +47,12 @@ a {
 }
 
 @media (max-width: 640px) {
+  .app-shell-page {
+    gap: 16px;
+  }
+
   .document-page__frame {
-    padding: 12px;
+    padding: 8px;
+    border-radius: 8px;
   }
 }
