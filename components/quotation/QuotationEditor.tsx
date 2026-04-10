@@ -162,7 +162,7 @@ export function QuotationEditor({
           </Space>
         </Flex>
 
-        <Card bodyStyle={{ padding: isMobile ? 14 : 20 }}>
+        <Card styles={{ body: { padding: isMobile ? 14 : 20 } }}>
           <QuotationForm
             form={form}
             initialValues={initialQuotation ?? createDefaultQuotation()}

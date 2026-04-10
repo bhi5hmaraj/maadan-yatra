@@ -1,12 +1,27 @@
+import type { QuotationIR, VendorDocument } from '@/schemas';
+
+export type LineItemMode = 'and' | 'or';
+
 export interface LineItem {
   desc: string;
   detail: string;
+  qty?: number | '';
   amt: number | '';
+  mode?: LineItemMode;
+  orGroup?: string;
+  selected?: boolean;
 }
 
 export interface ItineraryDay {
   title: string;
   desc: string;
+}
+
+export interface HotelStay {
+  name: string;
+  location: string;
+  roomType: string;
+  nights: number | '';
 }
 
 export interface Customer {
@@ -19,6 +34,7 @@ export interface Trip {
   destination: string;
   departureDate: string;
   returnDate: string;
+  batchDates: string[];
   adults: number;
   children: number;
   nights: number;
@@ -37,16 +53,21 @@ export interface Quotation {
   number: string;
   date: string;
   validUntil: string;
+  documentFontScale: number;
   customer: Customer;
   trip: Trip;
   consultant: string;
   lineItems: LineItem[];
+  hotels: HotelStay[];
   inclusions: string[];
-  exclusions: string;
+  exclusions: string[];
   itinerary: ItineraryDay[];
   payment: Payment;
-  notes: string;
+  notes: string[];
+  terms: string[];
   status: QuotationStatus;
+  sourceIr?: QuotationIR;
+  sourceVendorDocument?: VendorDocument;
   createdAt: string;
   updatedAt: string;
 }
@@ -62,16 +83,26 @@ export const DEFAULT_INCLUSIONS = [
   'Visa assistance',
 ];
 
+export const DEFAULT_EXCLUSIONS = [
+  'Visa fees',
+  'Personal meals',
+  'Tips and porterage',
+];
+
 export const DEFAULT_LINE_ITEMS: LineItem[] = [
-  { desc: 'International flights', detail: 'Return, Economy', amt: '' },
-  { desc: 'Hotel accommodation', detail: 'Nights + Breakfast', amt: '' },
-  { desc: 'All transfers', detail: 'Airport and inter-city', amt: '' },
-  { desc: 'Service fee', detail: 'Itinerary and 24/7 support', amt: '' },
+  { desc: 'International flights', detail: 'Return, Economy', qty: 1, amt: '', mode: 'and', selected: true },
+  { desc: 'Hotel accommodation', detail: 'Nights + Breakfast', qty: 1, amt: '', mode: 'and', selected: true },
+  { desc: 'All transfers', detail: 'Airport and inter-city', qty: 1, amt: '', mode: 'and', selected: true },
+  { desc: 'Service fee', detail: 'Itinerary and 24/7 support', qty: 1, amt: '', mode: 'and', selected: true },
 ];
 
 export const DEFAULT_ITINERARY: ItineraryDay[] = [
   { title: 'Day 1: Arrival and check-in', desc: '' },
   { title: 'Day 2: Exploration', desc: '' },
+];
+
+export const DEFAULT_HOTELS: HotelStay[] = [
+  { name: '', location: '', roomType: '', nights: '' },
 ];
 
 export function createDefaultQuotation(): Omit<Quotation, 'id' | 'createdAt' | 'updatedAt'> {
@@ -94,6 +125,7 @@ export function createDefaultQuotation(): Omit<Quotation, 'id' | 'createdAt' | '
     number: `QT-${today.getFullYear()}-001`,
     date: formatDate(today),
     validUntil: formatDate(validUntil),
+    documentFontScale: 1.08,
     customer: {
       name: '',
       email: '',
@@ -103,6 +135,7 @@ export function createDefaultQuotation(): Omit<Quotation, 'id' | 'createdAt' | '
       destination: '',
       departureDate: formatDate(departure),
       returnDate: formatDate(returnDate),
+      batchDates: [],
       adults: 2,
       children: 0,
       nights: 7,
@@ -110,14 +143,22 @@ export function createDefaultQuotation(): Omit<Quotation, 'id' | 'createdAt' | '
     },
     consultant: '',
     lineItems: [...DEFAULT_LINE_ITEMS],
-    inclusions: ['Return flights', 'Hotel and breakfast', 'All transfers', 'Travel insurance', '24/7 support'],
-    exclusions: '',
+    hotels: [...DEFAULT_HOTELS],
+    inclusions: [
+      'Return flights',
+      'Hotel and breakfast',
+      'All transfers',
+      'Travel insurance',
+      '24/7 support',
+    ],
+    exclusions: [...DEFAULT_EXCLUSIONS],
     itinerary: [...DEFAULT_ITINERARY],
     payment: {
       nonRefundable: 0,
       balanceDueDate: formatDate(balanceDue),
     },
-    notes: '',
+    notes: [],
+    terms: [],
     status: 'draft',
   };
 }

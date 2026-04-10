@@ -1,5 +1,7 @@
 'use client';
 
+export const dynamic = 'force-dynamic';
+
 import React, { useRef } from 'react';
 import Link from 'next/link';
 import { Button, Descriptions, Grid, Skeleton, Space, Tag, Typography, message } from 'antd';

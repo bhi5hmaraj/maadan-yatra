@@ -28,7 +28,23 @@ export async function generatePDF(
       format: 'a4',
       orientation: 'portrait' as const,
     },
-    pagebreak: { mode: 'css' as const },
+    pagebreak: {
+      mode: ['css', 'legacy'] as const,
+      avoid: [
+        '.top-meta__item',
+        '.mg-cell',
+        '.date-card',
+        '.batch-card',
+        '.alt-card',
+        '.alt-item',
+        '.hotel-card',
+        '.ie-card',
+        '.notes-card',
+        '.terms-block',
+        '.term-item',
+        '.itinerary-card',
+      ],
+    },
   };
 
   await html2pdf().set(options).from(element).save();

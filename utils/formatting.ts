@@ -1,6 +1,7 @@
 export function formatDate(dateString: string | undefined): string {
   if (!dateString) return '—';
   const date = new Date(dateString + 'T00:00:00');
+  if (Number.isNaN(date.getTime())) return '—';
   return date.toLocaleDateString('en-IN', {
     day: 'numeric',
     month: 'short',
@@ -42,10 +43,47 @@ export function generateQuotationNumber(existingNumbers: string[]): string {
   return `${prefix}${String(nextNum).padStart(3, '0')}`;
 }
 
-export function calculateTotal(lineItems: Array<{ amt: number | '' }>): number {
+interface TotallableLineItem {
+  amt: number | '';
+  qty?: number | '';
+  mode?: 'and' | 'or';
+  selected?: boolean;
+}
+
+export function getLineItemQuantity(item: Pick<TotallableLineItem, 'qty'>): number {
+  if (typeof item.qty === 'number' && Number.isFinite(item.qty) && item.qty > 0) {
+    return item.qty;
+  }
+
+  if (typeof item.qty === 'string') {
+    const parsed = parseFloat(item.qty);
+    if (Number.isFinite(parsed) && parsed > 0) {
+      return parsed;
+    }
+  }
+
+  return 1;
+}
+
+export function getLineItemAmount(item: Pick<TotallableLineItem, 'amt'>): number {
+  return typeof item.amt === 'number' ? item.amt : parseFloat(item.amt) || 0;
+}
+
+export function getLineItemTotal(item: TotallableLineItem): number {
+  return getLineItemAmount(item) * getLineItemQuantity(item);
+}
+
+export function isLineItemIncludedInTotal(item: Pick<TotallableLineItem, 'mode' | 'selected'>): boolean {
+  return item.mode !== 'or' || item.selected !== false;
+}
+
+export function calculateTotal(lineItems: TotallableLineItem[]): number {
   return lineItems.reduce((sum, item) => {
-    const amt = typeof item.amt === 'number' ? item.amt : parseFloat(item.amt) || 0;
-    return sum + amt;
+    if (!isLineItemIncludedInTotal(item)) {
+      return sum;
+    }
+
+    return sum + getLineItemTotal(item);
   }, 0);
 }
 
@@ -71,4 +109,21 @@ export function formatDateRange(from: string | undefined, to: string | undefined
   }
 
   return `${dateStr} · ${nights} nights`;
+}
+
+export function normalizeStringList(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => String(item).trim())
+      .filter(Boolean);
+  }
+
+  if (typeof value === 'string') {
+    return value
+      .split(',')
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+
+  return [];
 }

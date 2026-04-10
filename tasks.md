@@ -1,0 +1,23 @@
+# Quotation Builder Tasks
+
+- [x] Extend the quotation data model with:
+  - batch dates
+  - hotels
+  - bullet-point important notes
+  - terms and conditions
+  - document font scale
+- [x] Update IR adapters so the new quotation fields map cleanly to and from the canonical IR
+- [x] Make the quotation form denser and more compact
+- [x] Add batch dates editing to the form
+- [x] Add hotel editing to the form
+- [x] Replace note blob editing with bullet-point notes
+- [x] Add terms and conditions editing
+- [x] Add a document font size option to the form
+- [x] Remove the payment-plan section from the generated proposal
+- [x] Keep important dates grouped together in one summary area
+- [x] Show batch date options clearly in the proposal
+- [x] Add a hotels/accommodation section to the proposal
+- [x] Render important notes as bullets
+- [x] Render terms and conditions as styled cards/list items, not a text blob
+- [x] Make the PDF typography larger and let it respond to the selected font scale
+- [x] Verify the preview and PDF output with `npm run build`

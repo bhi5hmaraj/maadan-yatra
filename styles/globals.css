@@ -21,7 +21,7 @@ a {
 .app-shell-page {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 18px;
   min-width: 0;
 }
 
@@ -46,6 +46,38 @@ a {
   margin-bottom: 16px;
 }
 
+.quotation-form .ant-card.ant-card-small {
+  border-radius: 10px;
+}
+
+.quotation-form .ant-card-small > .ant-card-head {
+  min-height: 38px;
+  padding: 0 14px;
+}
+
+.quotation-form .ant-card-small > .ant-card-body {
+  padding: 12px 14px;
+}
+
+.quotation-form .ant-form-item {
+  margin-bottom: 10px;
+}
+
+.quotation-form .ant-form-item-label {
+  padding-bottom: 4px;
+}
+
+.quotation-form .ant-form-item-label > label {
+  font-size: 12px;
+}
+
+.quotation-form .ant-input,
+.quotation-form .ant-input-number,
+.quotation-form .ant-picker,
+.quotation-form .ant-select-selector {
+  min-height: 30px;
+}
+
 @media (max-width: 640px) {
   .app-shell-page {
     gap: 16px;
@@ -54,5 +86,15 @@ a {
   .document-page__frame {
     padding: 8px;
     border-radius: 8px;
+  }
+
+  .quotation-form .ant-card-small > .ant-card-head,
+  .quotation-form .ant-card-small > .ant-card-body {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .quotation-form .ant-form-item {
+    margin-bottom: 9px;
   }
 }

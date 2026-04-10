@@ -129,7 +129,7 @@ export function AppLayout({ children }: AppLayoutProps) {
         placement="left"
         open={mobileMenuOpen}
         onClose={() => setMobileMenuOpen(false)}
-        bodyStyle={{ padding: 0 }}
+        styles={{ body: { padding: 0 } }}
       >
         <Menu
           mode="inline"
