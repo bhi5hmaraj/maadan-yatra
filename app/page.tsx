@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { Button, Card, Col, List, Row, Space, Statistic, Tag, Typography } from 'antd';
-import { FileTextOutlined, PlusOutlined } from '@ant-design/icons';
+import { FileSearchOutlined, FileTextOutlined, PlusOutlined } from '@ant-design/icons';
 import { useList } from '@refinedev/core';
 import type { Quotation } from '@/types/quotation';
 import { calculateTotal, formatAmountRaw, formatDate } from '@/utils/formatting';
@@ -37,6 +37,9 @@ export default function DashboardPage() {
           </Link>
           <Link href="/quotations">
             <Button icon={<FileTextOutlined />}>View quotations</Button>
+          </Link>
+          <Link href="/vendor-import">
+            <Button icon={<FileSearchOutlined />}>Import vendor PDF</Button>
           </Link>
         </Space>
       </div>

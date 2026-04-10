@@ -4,7 +4,7 @@ import { Refine } from '@refinedev/core';
 import { RefineThemes, useNotificationProvider } from '@refinedev/antd';
 import routerProvider from '@refinedev/nextjs-router';
 import { ConfigProvider, App as AntdApp } from 'antd';
-import { FileTextOutlined, HomeOutlined } from '@ant-design/icons';
+import { FileSearchOutlined, FileTextOutlined, HomeOutlined } from '@ant-design/icons';
 import { localStorageDataProvider } from './localStorageDataProvider';
 
 const customTheme = {
@@ -46,6 +46,14 @@ export function RefineProvider({ children }: { children: React.ReactNode }) {
               meta: {
                 label: 'Quotations',
                 icon: <FileTextOutlined />,
+              },
+            },
+            {
+              name: 'vendor-import',
+              list: '/vendor-import',
+              meta: {
+                label: 'Vendor Import',
+                icon: <FileSearchOutlined />,
               },
             },
           ]}

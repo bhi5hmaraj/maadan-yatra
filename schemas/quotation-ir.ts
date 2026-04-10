@@ -1,0 +1,136 @@
+import { z } from 'zod';
+import {
+  cancellationRuleSchema,
+  dateRangeSchema,
+  extractedListItemSchema,
+  moneySchema,
+  paxSchema,
+  partyRefSchema,
+  pricingBlockSchema,
+  quoteStatusSchema,
+  stayItemSchema,
+  transportItemSchema,
+  itineraryItemSchema,
+} from '@/schemas/common';
+
+export const quotationIRSchema = z.object({
+  id: z.string(),
+  irVersion: z.string().default('1.0'),
+  status: quoteStatusSchema.default('draft'),
+  vendorDocumentId: z.string().optional(),
+  quotationNumber: z.string().optional(),
+  customer: partyRefSchema.extend({
+    name: z.string().default(''),
+  }).default({ name: '' }),
+  consultant: z.string().optional(),
+  trip: z.object({
+    title: z.string().optional(),
+    tripId: z.string().optional(),
+    destination: z.string().default(''),
+    packageName: z.string().optional(),
+    packageType: z.string().optional(),
+    dateRange: dateRangeSchema.optional(),
+    batchDates: z.array(z.string()).default([]),
+    pax: paxSchema.optional(),
+  }),
+  pricing: z.object({
+    currency: z.string().default('INR'),
+    lineItems: z.array(pricingBlockSchema).default([]),
+    total: moneySchema.optional(),
+    advance: moneySchema.optional(),
+    balanceDueDate: z.string().optional(),
+  }),
+  stays: z.array(stayItemSchema).default([]),
+  transport: z.array(transportItemSchema).default([]),
+  inclusions: z.array(extractedListItemSchema).default([]),
+  exclusions: z.array(extractedListItemSchema).default([]),
+  itinerary: z.array(itineraryItemSchema).default([]),
+  notes: z.array(extractedListItemSchema).default([]),
+  terms: z.array(extractedListItemSchema).default([]),
+  cancellationPolicy: z.array(cancellationRuleSchema).default([]),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+
+export type QuotationIR = z.infer<typeof quotationIRSchema>;
+
+export const quotationIRExtractionSchema = z.object({
+  customer: z.object({
+    name: z.string().nullable(),
+    email: z.string().nullable(),
+    phone: z.string().nullable(),
+  }),
+  consultant: z.string().nullable(),
+  trip: z.object({
+    title: z.string().nullable(),
+    tripId: z.string().nullable(),
+    destination: z.string().nullable(),
+    packageName: z.string().nullable(),
+    packageType: z.string().nullable(),
+    dateRange: z.object({
+      startDate: z.string().nullable(),
+      endDate: z.string().nullable(),
+      nights: z.number().int().nullable(),
+      days: z.number().int().nullable(),
+    }),
+    batchDates: z.array(z.string()),
+    pax: z.object({
+      adults: z.number().int().nullable(),
+      children: z.number().int().nullable(),
+      infants: z.number().int().nullable(),
+      total: z.number().int().nullable(),
+    }),
+  }),
+  pricing: z.object({
+    currency: z.string().nullable(),
+    lineItems: z.array(z.object({
+      label: z.string(),
+      unit: z.string().nullable(),
+      amount: z.number().nullable(),
+      quantity: z.number().nullable(),
+      gstIncluded: z.boolean().nullable(),
+      notes: z.string().nullable(),
+    })),
+    totalAmount: z.number().nullable(),
+    advanceAmount: z.number().nullable(),
+    balanceDueDate: z.string().nullable(),
+  }),
+  stays: z.array(z.object({
+    city: z.string().nullable(),
+    hotelName: z.string().nullable(),
+    roomType: z.string().nullable(),
+    mealPlan: z.string().nullable(),
+    accommodationType: z.string().nullable(),
+    nightLabel: z.string().nullable(),
+    date: z.string().nullable(),
+    quantity: z.number().nullable(),
+  })),
+  transport: z.array(z.object({
+    dayLabel: z.string().nullable(),
+    date: z.string().nullable(),
+    route: z.string().nullable(),
+    service: z.string().nullable(),
+    vehicleType: z.string().nullable(),
+    quantity: z.number().nullable(),
+  })),
+  inclusions: z.array(z.string()),
+  exclusions: z.array(z.string()),
+  itinerary: z.array(z.object({
+    dayNumber: z.number().int().nullable(),
+    title: z.string(),
+    description: z.string().nullable(),
+    route: z.string().nullable(),
+    distanceKm: z.number().nullable(),
+    durationText: z.string().nullable(),
+  })),
+  notes: z.array(z.string()),
+  terms: z.array(z.string()),
+  cancellationPolicy: z.array(z.object({
+    fromDaysBefore: z.number().int().nullable(),
+    toDaysBefore: z.number().int().nullable(),
+    penaltyPercent: z.number().nullable(),
+    text: z.string().nullable(),
+  })),
+});
+
+export type QuotationIRExtraction = z.infer<typeof quotationIRExtractionSchema>;
