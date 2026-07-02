@@ -2,11 +2,14 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Button, Popconfirm, Space, Table, Tag, Typography } from 'antd';
-import { DeleteOutlined, EditOutlined, EyeOutlined, PlusOutlined } from '@ant-design/icons';
+import { CopyOutlined, DeleteOutlined, EditOutlined, EyeOutlined, PlusOutlined } from '@ant-design/icons';
 import { useDelete, useList } from '@refinedev/core';
+import { localStorageDataProvider } from '@/providers/localStorageDataProvider';
 import type { Quotation } from '@/types/quotation';
 import { calculateTotal, formatAmountRaw, formatDate } from '@/utils/formatting';
+import { createQuotationDuplicate } from '@/utils/quotation-duplication';
 
 const { Paragraph, Title } = Typography;
 
@@ -18,12 +21,31 @@ const statusColors: Record<Quotation['status'], string> = {
 };
 
 export default function QuotationsListPage() {
+  const router = useRouter();
   const { data, isLoading } = useList<Quotation>({
     resource: 'quotations',
     sorters: [{ field: 'updatedAt', order: 'desc' }],
   });
   const { mutate: deleteQuotation, isLoading: deleting } = useDelete();
+  const [duplicatingId, setDuplicatingId] = React.useState<string | null>(null);
   const quotations = data?.data ?? [];
+
+  const handleDuplicate = async (quotation: Quotation) => {
+    const existingNumbers = quotations.map((item) => item.number);
+    const duplicate = createQuotationDuplicate(quotation, existingNumbers);
+
+    setDuplicatingId(quotation.id);
+    try {
+      const result = await localStorageDataProvider.create<Quotation>({
+        resource: 'quotations',
+        variables: duplicate,
+      });
+
+      router.push(`/quotations/edit/${result.data.id}`);
+    } finally {
+      setDuplicatingId(null);
+    }
+  };
 
   return (
     <div className="app-shell-page">
@@ -109,6 +131,11 @@ export default function QuotationsListPage() {
                 <Link href={`/quotations/edit/${record.id}`}>
                   <Button icon={<EditOutlined />} />
                 </Link>
+                <Button
+                  icon={<CopyOutlined />}
+                  loading={duplicatingId === record.id}
+                  onClick={() => void handleDuplicate(record)}
+                />
                 <Popconfirm
                   title="Delete quotation?"
                   description="This removes the saved quotation from local storage."

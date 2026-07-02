@@ -5,21 +5,25 @@ export const dynamic = 'force-dynamic';
 import React, { useRef } from 'react';
 import Link from 'next/link';
 import { Button, Descriptions, Grid, Skeleton, Space, Tag, Typography, message } from 'antd';
-import { ArrowLeftOutlined, DownloadOutlined, EditOutlined } from '@ant-design/icons';
-import { useParams } from 'next/navigation';
+import { ArrowLeftOutlined, CopyOutlined, DownloadOutlined, EditOutlined } from '@ant-design/icons';
+import { useParams, useRouter } from 'next/navigation';
 import { useOne } from '@refinedev/core';
 import { QuotationDocument } from '@/components/quotation/QuotationDocument';
+import { localStorageDataProvider } from '@/providers/localStorageDataProvider';
 import type { Quotation } from '@/types/quotation';
 import { calculateTotal, formatAmountRaw, formatDate } from '@/utils/formatting';
 import { generatePDF } from '@/utils/pdf';
+import { createQuotationDuplicate } from '@/utils/quotation-duplication';
 
 const { Paragraph, Title } = Typography;
 const { useBreakpoint } = Grid;
 
 export default function ShowQuotationPage() {
   const params = useParams<{ id: string }>();
+  const router = useRouter();
   const documentRef = useRef<HTMLDivElement>(null);
   const [messageApi, contextHolder] = message.useMessage();
+  const [isDuplicating, setIsDuplicating] = React.useState(false);
   const screens = useBreakpoint();
   const isMobile = !screens.md;
   const { data, isLoading, isError } = useOne<Quotation>({
@@ -36,6 +40,27 @@ export default function ShowQuotationPage() {
   }
 
   const quotation = data.data;
+
+  const handleDuplicate = async () => {
+    setIsDuplicating(true);
+    try {
+      const listResult = await localStorageDataProvider.getList<Quotation>({
+        resource: 'quotations',
+        pagination: { mode: 'off' },
+      });
+      const existingNumbers = listResult.data.map((item) => item.number);
+      const duplicate = createQuotationDuplicate(quotation, existingNumbers);
+      const result = await localStorageDataProvider.create<Quotation>({
+        resource: 'quotations',
+        variables: duplicate,
+      });
+
+      messageApi.success(`Created ${result.data.number}`);
+      router.push(`/quotations/edit/${result.data.id}`);
+    } finally {
+      setIsDuplicating(false);
+    }
+  };
 
   const handleDownload = async () => {
     if (!documentRef.current) {
@@ -69,6 +94,14 @@ export default function ShowQuotationPage() {
             <Link href={`/quotations/edit/${quotation.id}`}>
               <Button block={isMobile} icon={<EditOutlined />}>Edit quotation</Button>
             </Link>
+            <Button
+              block={isMobile}
+              icon={<CopyOutlined />}
+              loading={isDuplicating}
+              onClick={() => void handleDuplicate()}
+            >
+              Duplicate
+            </Button>
             <Tag>{quotation.status.toUpperCase()}</Tag>
           </Space>
         </div>
