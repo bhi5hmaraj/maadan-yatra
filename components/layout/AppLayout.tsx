@@ -5,6 +5,7 @@ import { Button, Drawer, Grid, Layout, Menu, theme } from 'antd';
 import { MenuOutlined } from '@ant-design/icons';
 import { useMenu, useNavigation, useResource } from '@refinedev/core';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
 const { Header, Sider, Content } = Layout;
 const { useBreakpoint } = Grid;
@@ -14,6 +15,7 @@ interface AppLayoutProps {
 }
 
 export function AppLayout({ children }: AppLayoutProps) {
+  const pathname = usePathname();
   const { menuItems } = useMenu();
   const { push } = useNavigation();
   const { resource } = useResource();
@@ -23,6 +25,10 @@ export function AppLayout({ children }: AppLayoutProps) {
 
   const [collapsed, setCollapsed] = React.useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
+
+  if (pathname?.startsWith('/insurance')) {
+    return <>{children}</>;
+  }
 
   const menuItemsConfig = menuItems.map((item) => ({
     key: item.key ?? item.name,
