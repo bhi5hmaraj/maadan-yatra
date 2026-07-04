@@ -1,0 +1,112 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum InsuranceCaseStatus {
+  UPLOADED
+  PARSING
+  NEEDS_REVIEW
+  PARSE_FAILED
+  VERIFIED
+  FINALIZED
+  REJECTED
+}
+
+enum InsuranceDocumentType {
+  AADHAAR_FRONT
+  AADHAAR_BACK
+  PURCHASE_SLIP
+  OTHER
+}
+
+enum AuditActorType {
+  EMPLOYEE
+  ADMIN
+  PROVIDER_LINK
+  SYSTEM
+}
+
+enum InsuranceParseJobStatus {
+  QUEUED
+  RUNNING
+  COMPLETE
+  FAILED
+}
+
+model InsuranceCase {
+  id                String                @id @default(uuid()) @db.Uuid
+  status            InsuranceCaseStatus   @default(UPLOADED)
+  createdByUserId   String?
+  customerName      String?
+  notes             String?
+  aiExtraction      Json?
+  confirmedExtraction Json?
+  parseError        String?
+  parsedAt          DateTime?
+  verifiedAt        DateTime?
+  verifiedByUserId  String?
+  confirmedAt       DateTime?
+  confirmedByUserId String?
+  finalizedAt       DateTime?
+  finalizedByUserId String?
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
+  documents         InsuranceDocument[]
+  parseJobs         InsuranceParseJob[]
+  auditEvents       AuditEvent[]
+
+  @@index([status, updatedAt])
+}
+
+model InsuranceDocument {
+  id              String                @id @default(uuid()) @db.Uuid
+  caseId          String                @db.Uuid
+  type            InsuranceDocumentType
+  blobUrl         String
+  blobDownloadUrl String?
+  blobPathname    String
+  fileName        String
+  mimeType        String
+  sizeBytes       Int
+  etag            String?
+  shareExternally Boolean               @default(false)
+  createdAt       DateTime              @default(now())
+  case            InsuranceCase         @relation(fields: [caseId], references: [id], onDelete: Cascade)
+
+  @@index([caseId, type])
+}
+
+model InsuranceParseJob {
+  id          String                  @id @default(uuid()) @db.Uuid
+  caseId      String                  @db.Uuid
+  status      InsuranceParseJobStatus @default(QUEUED)
+  attempts    Int                     @default(0)
+  error       String?
+  startedAt   DateTime?
+  completedAt DateTime?
+  createdAt   DateTime                @default(now())
+  updatedAt   DateTime                @updatedAt
+  case        InsuranceCase           @relation(fields: [caseId], references: [id], onDelete: Cascade)
+
+  @@index([status, createdAt])
+  @@index([caseId, createdAt])
+}
+
+model AuditEvent {
+  id          String         @id @default(uuid()) @db.Uuid
+  caseId      String?        @db.Uuid
+  actorUserId String?
+  actorType   AuditActorType
+  action      String
+  metadata    Json?
+  createdAt   DateTime       @default(now())
+  case        InsuranceCase? @relation(fields: [caseId], references: [id], onDelete: SetNull)
+
+  @@index([caseId, createdAt])
+  @@index([action, createdAt])
+}
