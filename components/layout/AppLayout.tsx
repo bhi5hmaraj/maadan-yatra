@@ -4,6 +4,7 @@ import React from 'react';
 import { Button, Drawer, Grid, Layout, Menu, theme } from 'antd';
 import { MenuOutlined } from '@ant-design/icons';
 import { useMenu, useNavigation, useResource } from '@refinedev/core';
+import { Show, SignInButton, SignUpButton, UserButton } from '@clerk/nextjs';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
@@ -89,14 +90,29 @@ export function AppLayout({ children }: AppLayoutProps) {
             </span>
           </div>
         </Link>
-        {isMobile ? (
-          <Button
-            type="text"
-            icon={<MenuOutlined />}
-            onClick={() => setMobileMenuOpen(true)}
-            style={{ color: '#fff', width: 40, height: 40 }}
-          />
-        ) : null}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <Show when="signed-out">
+            <SignInButton mode="modal">
+              <Button size="small">Sign in</Button>
+            </SignInButton>
+            {!isMobile ? (
+              <SignUpButton mode="modal">
+                <Button size="small" type="primary">Sign up</Button>
+              </SignUpButton>
+            ) : null}
+          </Show>
+          <Show when="signed-in">
+            <UserButton />
+          </Show>
+          {isMobile ? (
+            <Button
+              type="text"
+              icon={<MenuOutlined />}
+              onClick={() => setMobileMenuOpen(true)}
+              style={{ color: '#fff', width: 40, height: 40 }}
+            />
+          ) : null}
+        </div>
       </Header>
 
       <Layout>

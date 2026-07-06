@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import { Cormorant_Garamond, DM_Sans } from 'next/font/google';
+import { ClerkProvider } from '@clerk/nextjs';
 import { RefineProvider } from '@/providers/refine-provider';
 import { AppLayout } from '@/components/layout/AppLayout';
 import '@/styles/globals.css';
@@ -33,11 +34,13 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${dmSans.variable} ${cormorantGaramond.variable}`}>
       <body className={dmSans.className}>
-        <RefineProvider>
-          <Suspense fallback={null}>
-            <AppLayout>{children}</AppLayout>
-          </Suspense>
-        </RefineProvider>
+        <ClerkProvider>
+          <RefineProvider>
+            <Suspense fallback={null}>
+              <AppLayout>{children}</AppLayout>
+            </Suspense>
+          </RefineProvider>
+        </ClerkProvider>
       </body>
     </html>
   );
