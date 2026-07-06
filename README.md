@@ -23,6 +23,37 @@ machine-read data, and share only the final fields with insurance partners.
 - Gemini for document parsing.
 - Pino logs with trace ids for upload, parse, admin, and share work.
 
+## Architecture
+
+```mermaid
+flowchart LR
+  Staff[Staff phone] --> Upload[Insurance upload page]
+  Admin[Admin user] --> AdminUI[Insurance admin pages]
+  Partner[Insurance partner] --> Share[Share view]
+
+  Upload --> UploadAPI[Upload API]
+  AdminUI --> AdminAPI[Admin API]
+  Share --> SharePage[Share page]
+
+  UploadAPI --> Blob[Vercel Blob]
+  UploadAPI --> DB[(Neon Postgres)]
+  UploadAPI --> Queue[Parse job table]
+
+  Queue --> Worker[Parse runner]
+  Worker --> Blob
+  Worker --> Gemini[Gemini parser]
+  Gemini --> Worker
+  Worker --> DB
+
+  AdminAPI --> DB
+  AdminAPI --> Queue
+  SharePage --> DB
+
+  Clerk[Clerk] --> Upload
+  Clerk --> AdminUI
+  Clerk --> Share
+```
+
 ## Local Work
 
 ```bash
