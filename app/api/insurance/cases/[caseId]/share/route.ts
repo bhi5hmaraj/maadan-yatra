@@ -1,23 +1,18 @@
 import { NextResponse } from 'next/server';
 import { requireAdminApiUser } from '@/features/auth/admin';
-import { confirmInsuranceCaseExtraction } from '@/features/insurance/adapters/prisma-case-repository';
-import { insuranceExtractionSchema } from '@/features/insurance/parser';
+import { updateInsuranceCaseShareSettings } from '@/features/insurance/adapters/prisma-case-repository';
+import {
+  insuranceShareSettingsSchema,
+  normalizeInsuranceShareSettings,
+} from '@/features/insurance/share-view';
 import { getRequestTraceId, logger } from '@/lib/logging/server';
 
 export const runtime = 'nodejs';
 
 function jsonError(message: string, status: number, traceId: string) {
   return NextResponse.json(
-    {
-      error: message,
-      traceId,
-    },
-    {
-      status,
-      headers: {
-        'x-trace-id': traceId,
-      },
-    }
+    { error: message, traceId },
+    { status, headers: { 'x-trace-id': traceId } }
   );
 }
 
@@ -36,29 +31,36 @@ export async function PUT(
 
   try {
     const body = await request.json();
-    const extraction = insuranceExtractionSchema.parse(body.extraction);
+    const settings = normalizeInsuranceShareSettings(
+      insuranceShareSettingsSchema.parse(body)
+    );
 
-    const updatedCase = await confirmInsuranceCaseExtraction({
+    const updatedCase = await updateInsuranceCaseShareSettings({
       caseId,
-      extraction,
+      settings,
+      actorUserId: admin.user?.userId,
     });
 
     logger.info(
       {
         traceId,
         caseId,
-        missingFieldCount: extraction.missingFields.length,
+        enabled: settings.enabled,
+        allowedEmailCount: settings.allowedEmails.length,
+        fieldCount: settings.fieldPaths.length,
         durationMs: Date.now() - startedAt,
       },
-      'insurance_case_review_confirmed'
+      'insurance_case_share_settings_updated'
     );
 
     return NextResponse.json(
       {
         traceId,
         caseId: updatedCase.id,
-        status: updatedCase.status,
-        confirmedAt: updatedCase.confirmedAt?.toISOString() ?? null,
+        shareEnabled: updatedCase.shareEnabled,
+        shareAllowedEmails: settings.allowedEmails,
+        shareFieldPaths: settings.fieldPaths,
+        shareUpdatedAt: updatedCase.shareUpdatedAt?.toISOString() ?? null,
       },
       {
         headers: {
@@ -68,7 +70,7 @@ export async function PUT(
     );
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : 'Failed to confirm insurance case.';
+      error instanceof Error ? error.message : 'Failed to update share settings.';
 
     logger.error(
       {
@@ -77,7 +79,7 @@ export async function PUT(
         error: message,
         durationMs: Date.now() - startedAt,
       },
-      'insurance_case_review_confirm_failed'
+      'insurance_case_share_settings_update_failed'
     );
 
     return jsonError(message, 400, traceId);

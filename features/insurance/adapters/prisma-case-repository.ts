@@ -2,6 +2,7 @@ import { prisma } from '@/lib/prisma';
 import type { Prisma } from '@/app/generated/prisma/client';
 import type { CreateInsuranceUploadInput } from '../domain';
 import type { InsuranceExtraction } from '../parser';
+import type { InsuranceShareSettings } from '../share-view';
 
 function documentCreateData(input: CreateInsuranceUploadInput['document']) {
   return {
@@ -93,6 +94,38 @@ export async function listInsuranceCases() {
     },
     take: 50,
     include: {
+      parseJobs: {
+        orderBy: {
+          createdAt: 'desc',
+        },
+        take: 1,
+        select: {
+          id: true,
+          status: true,
+          attempts: true,
+          error: true,
+          createdAt: true,
+          startedAt: true,
+          completedAt: true,
+        },
+      },
+      _count: {
+        select: {
+          auditEvents: true,
+          documents: true,
+          parseJobs: true,
+        },
+      },
+    },
+  });
+}
+
+export async function getInsuranceCaseForAdmin(caseId: string) {
+  return prisma.insuranceCase.findUnique({
+    where: {
+      id: caseId,
+    },
+    include: {
       documents: {
         orderBy: {
           createdAt: 'asc',
@@ -112,7 +145,7 @@ export async function listInsuranceCases() {
         orderBy: {
           createdAt: 'desc',
         },
-        take: 3,
+        take: 20,
         select: {
           id: true,
           status: true,
@@ -123,9 +156,96 @@ export async function listInsuranceCases() {
           completedAt: true,
         },
       },
+      auditEvents: {
+        orderBy: {
+          createdAt: 'desc',
+        },
+        take: 50,
+        select: {
+          id: true,
+          actorType: true,
+          actorUserId: true,
+          action: true,
+          metadata: true,
+          createdAt: true,
+        },
+      },
       _count: {
         select: {
           auditEvents: true,
+        },
+      },
+    },
+  });
+}
+
+export async function getInsuranceCaseForShare(caseId: string) {
+  return prisma.insuranceCase.findUnique({
+    where: {
+      id: caseId,
+    },
+    select: {
+      id: true,
+      status: true,
+      customerName: true,
+      confirmedExtraction: true,
+      confirmedAt: true,
+      shareEnabled: true,
+      shareAllowedEmails: true,
+      shareFieldPaths: true,
+      updatedAt: true,
+    },
+  });
+}
+
+export async function updateInsuranceCaseShareSettings(input: {
+  caseId: string;
+  settings: InsuranceShareSettings;
+  actorUserId?: string;
+}) {
+  return prisma.insuranceCase.update({
+    where: {
+      id: input.caseId,
+    },
+    data: {
+      shareEnabled: input.settings.enabled,
+      shareAllowedEmails: input.settings.allowedEmails as Prisma.InputJsonValue,
+      shareFieldPaths: input.settings.fieldPaths as Prisma.InputJsonValue,
+      shareUpdatedAt: new Date(),
+      shareUpdatedByUserId: input.actorUserId,
+      auditEvents: {
+        create: {
+          actorType: 'ADMIN',
+          actorUserId: input.actorUserId,
+          action: 'insurance.case_share_settings_updated',
+          metadata: {
+            enabled: input.settings.enabled,
+            allowedEmailCount: input.settings.allowedEmails.length,
+            fieldCount: input.settings.fieldPaths.length,
+          },
+        },
+      },
+    },
+  });
+}
+
+export async function listInsuranceQueueItems() {
+  return prisma.insuranceParseJob.findMany({
+    orderBy: {
+      createdAt: 'desc',
+    },
+    take: 50,
+    include: {
+      case: {
+        select: {
+          id: true,
+          customerName: true,
+          updatedAt: true,
+          _count: {
+            select: {
+              documents: true,
+            },
+          },
         },
       },
     },
@@ -185,19 +305,10 @@ export async function claimNextInsuranceParseJob(jobId?: string) {
       return null;
     }
 
-    await tx.insuranceCase.update({
-      where: {
-        id: job.caseId,
-      },
-      data: {
-        status: 'PARSING',
-        parseError: null,
-      },
-    });
-
-    return tx.insuranceParseJob.update({
+    const claimed = await tx.insuranceParseJob.updateMany({
       where: {
         id: job.id,
+        status: 'QUEUED',
       },
       data: {
         status: 'RUNNING',
@@ -208,6 +319,26 @@ export async function claimNextInsuranceParseJob(jobId?: string) {
         error: null,
       },
     });
+
+    if (claimed.count !== 1) {
+      return null;
+    }
+
+    await tx.insuranceCase.update({
+      where: {
+        id: job.caseId,
+      },
+      data: {
+        status: 'PARSING',
+        parseError: null,
+      },
+    });
+
+    return tx.insuranceParseJob.findUnique({
+      where: {
+        id: job.id,
+      },
+    });
   });
 }
 
@@ -216,39 +347,42 @@ export async function completeInsuranceParseJob(input: {
   caseId: string;
   extraction: InsuranceExtraction;
 }) {
-  return prisma.$transaction([
-    prisma.insuranceCase.update({
-      where: {
-        id: input.caseId,
-      },
-      data: {
-        status: 'NEEDS_REVIEW',
-        aiExtraction: input.extraction as Prisma.InputJsonValue,
-        parseError: null,
-        parsedAt: new Date(),
-        auditEvents: {
-          create: {
-            actorType: 'SYSTEM',
-            action: 'insurance.case_parsed',
-            metadata: {
-              jobId: input.jobId,
-              missingFieldCount: input.extraction.missingFields.length,
-            },
+  const now = new Date();
+
+  const updatedCase = await prisma.insuranceCase.update({
+    where: {
+      id: input.caseId,
+    },
+    data: {
+      status: 'NEEDS_REVIEW',
+      aiExtraction: input.extraction as Prisma.InputJsonValue,
+      parseError: null,
+      parsedAt: now,
+      auditEvents: {
+        create: {
+          actorType: 'SYSTEM',
+          action: 'insurance.case_parsed',
+          metadata: {
+            jobId: input.jobId,
+            missingFieldCount: input.extraction.missingFields.length,
           },
         },
       },
-    }),
-    prisma.insuranceParseJob.update({
-      where: {
-        id: input.jobId,
-      },
-      data: {
-        status: 'COMPLETE',
-        completedAt: new Date(),
-        error: null,
-      },
-    }),
-  ]);
+    },
+  });
+
+  await prisma.insuranceParseJob.update({
+    where: {
+      id: input.jobId,
+    },
+    data: {
+      status: 'COMPLETE',
+      completedAt: now,
+      error: null,
+    },
+  });
+
+  return updatedCase;
 }
 
 export async function failInsuranceParseJob(input: {
@@ -256,37 +390,40 @@ export async function failInsuranceParseJob(input: {
   caseId: string;
   error: string;
 }) {
-  return prisma.$transaction([
-    prisma.insuranceCase.update({
-      where: {
-        id: input.caseId,
-      },
-      data: {
-        status: 'PARSE_FAILED',
-        parseError: input.error,
-        auditEvents: {
-          create: {
-            actorType: 'SYSTEM',
-            action: 'insurance.case_parse_failed',
-            metadata: {
-              jobId: input.jobId,
-              error: input.error,
-            },
+  const now = new Date();
+
+  const updatedCase = await prisma.insuranceCase.update({
+    where: {
+      id: input.caseId,
+    },
+    data: {
+      status: 'PARSE_FAILED',
+      parseError: input.error,
+      auditEvents: {
+        create: {
+          actorType: 'SYSTEM',
+          action: 'insurance.case_parse_failed',
+          metadata: {
+            jobId: input.jobId,
+            error: input.error,
           },
         },
       },
-    }),
-    prisma.insuranceParseJob.update({
-      where: {
-        id: input.jobId,
-      },
-      data: {
-        status: 'FAILED',
-        completedAt: new Date(),
-        error: input.error,
-      },
-    }),
-  ]);
+    },
+  });
+
+  await prisma.insuranceParseJob.update({
+    where: {
+      id: input.jobId,
+    },
+    data: {
+      status: 'FAILED',
+      completedAt: now,
+      error: input.error,
+    },
+  });
+
+  return updatedCase;
 }
 
 export async function confirmInsuranceCaseExtraction(input: {

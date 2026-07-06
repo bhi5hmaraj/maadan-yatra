@@ -21,22 +21,23 @@ function jsonError(message: string, status: number, traceId: string) {
 
 export async function POST(
   request: Request,
-  { params }: { params: { caseId: string } }
+  { params }: { params: Promise<{ caseId: string }> }
 ) {
   const traceId = getRequestTraceId(request);
+  const { caseId } = await params;
 
   try {
-    const job = await enqueueInsuranceParseJob(params.caseId);
+    const job = await enqueueInsuranceParseJob(caseId);
 
     if (!job) {
-      logger.warn({ traceId, caseId: params.caseId }, 'insurance_parse_enqueue_case_not_found');
+      logger.warn({ traceId, caseId }, 'insurance_parse_enqueue_case_not_found');
       return jsonError('Insurance case was not found.', 404, traceId);
     }
 
     logger.info(
       {
         traceId,
-        caseId: params.caseId,
+        caseId,
         jobId: job.id,
         jobStatus: job.status,
       },
@@ -46,7 +47,7 @@ export async function POST(
     return NextResponse.json(
       {
         traceId,
-        caseId: params.caseId,
+        caseId,
         job: {
           id: job.id,
           status: job.status,
@@ -68,7 +69,7 @@ export async function POST(
     logger.error(
       {
         traceId,
-        caseId: params.caseId,
+        caseId,
         error: message,
       },
       'insurance_parse_enqueue_failed'

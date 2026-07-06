@@ -1,14 +1,18 @@
 import { NextResponse } from 'next/server';
 import { requireAdminApiUser } from '@/features/auth/admin';
-import { listInsuranceCases } from '@/features/insurance/adapters/prisma-case-repository';
-import { serializeCaseListItem } from '@/features/insurance/admin-api';
+import { getInsuranceCaseForAdmin } from '@/features/insurance/adapters/prisma-case-repository';
+import { serializeCaseDetail } from '@/features/insurance/admin-api';
 import { getRequestTraceId, logger } from '@/lib/logging/server';
 
 export const runtime = 'nodejs';
 
-export async function GET(request: Request) {
+export async function GET(
+  request: Request,
+  { params }: { params: Promise<{ caseId: string }> }
+) {
   const traceId = getRequestTraceId(request);
   const startedAt = Date.now();
+  const { caseId } = await params;
   const admin = await requireAdminApiUser(traceId);
 
   if (admin.response) {
@@ -16,21 +20,40 @@ export async function GET(request: Request) {
   }
 
   try {
-    const cases = await listInsuranceCases();
+    const insuranceCase = await getInsuranceCaseForAdmin(caseId);
+
+    if (!insuranceCase) {
+      logger.warn(
+        { traceId, caseId, durationMs: Date.now() - startedAt },
+        'insurance_admin_case_not_found'
+      );
+      return NextResponse.json(
+        {
+          error: 'Insurance case was not found.',
+          traceId,
+        },
+        {
+          status: 404,
+          headers: {
+            'x-trace-id': traceId,
+          },
+        }
+      );
+    }
 
     logger.info(
       {
         traceId,
-        caseCount: cases.length,
+        caseId,
         durationMs: Date.now() - startedAt,
       },
-      'insurance_admin_cases_listed'
+      'insurance_admin_case_loaded'
     );
 
     return NextResponse.json(
       {
         traceId,
-        cases: cases.map(serializeCaseListItem),
+        case: serializeCaseDetail(insuranceCase),
       },
       {
         headers: {
@@ -40,15 +63,16 @@ export async function GET(request: Request) {
     );
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : 'Failed to list insurance cases.';
+      error instanceof Error ? error.message : 'Failed to load insurance case.';
 
     logger.error(
       {
         traceId,
+        caseId,
         error: message,
         durationMs: Date.now() - startedAt,
       },
-      'insurance_admin_cases_list_failed'
+      'insurance_admin_case_load_failed'
     );
 
     return NextResponse.json(

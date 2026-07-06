@@ -1,3 +1,4 @@
+import { requireAdminApiUser } from '@/features/auth/admin';
 import { getInsuranceDocumentForDownload } from '@/features/insurance/adapters/prisma-case-repository';
 import { readPrivateInsuranceObject } from '@/features/insurance/adapters/vercel-blob-storage';
 import { getRequestTraceId, logger } from '@/lib/logging/server';
@@ -22,16 +23,23 @@ function contentDisposition(fileName: string) {
 
 export async function GET(
   request: Request,
-  { params }: { params: { documentId: string } }
+  { params }: { params: Promise<{ documentId: string }> }
 ) {
   const traceId = getRequestTraceId(request);
+  const startedAt = Date.now();
+  const { documentId } = await params;
+  const admin = await requireAdminApiUser(traceId);
+
+  if (admin.response) {
+    return admin.response;
+  }
 
   try {
-    const document = await getInsuranceDocumentForDownload(params.documentId);
+    const document = await getInsuranceDocumentForDownload(documentId);
 
     if (!document) {
       logger.warn(
-        { traceId, documentId: params.documentId },
+        { traceId, documentId },
         'insurance_document_download_not_found'
       );
 
@@ -41,9 +49,11 @@ export async function GET(
       );
     }
 
+    const blobReadStartedAt = Date.now();
     const blob = await readPrivateInsuranceObject({
       pathname: document.blobPathname,
     });
+    const blobReadDurationMs = Date.now() - blobReadStartedAt;
 
     if (blob.bytes.byteLength === 0) {
       logger.warn(
@@ -52,6 +62,8 @@ export async function GET(
           caseId: document.caseId,
           documentId: document.id,
           blobPathname: document.blobPathname,
+          durationMs: Date.now() - startedAt,
+          blobReadDurationMs,
         },
         'insurance_document_blob_not_found'
       );
@@ -70,6 +82,8 @@ export async function GET(
         mimeType: document.mimeType,
         sizeBytes: document.sizeBytes,
         bytesRead: blob.bytes.byteLength,
+        durationMs: Date.now() - startedAt,
+        blobReadDurationMs,
       },
       'insurance_document_downloaded'
     );
@@ -95,8 +109,9 @@ export async function GET(
     logger.error(
       {
         traceId,
-        documentId: params.documentId,
+        documentId,
         error: message,
+        durationMs: Date.now() - startedAt,
       },
       'insurance_document_download_failed'
     );

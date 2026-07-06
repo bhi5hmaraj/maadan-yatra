@@ -1,4 +1,5 @@
 import {
+  createPartFromBase64,
   createPartFromUri,
   createUserContent,
   GoogleGenAI,
@@ -69,9 +70,20 @@ async function downloadParserDocument(document: InsuranceParserDocument) {
     bytes.byteOffset + bytes.byteLength
   ) as ArrayBuffer;
 
-  return new File([fileBody], document.fileName, {
-    type: document.mimeType,
-  });
+  return {
+    bytes,
+    file: new File([fileBody], document.fileName, {
+      type: document.mimeType,
+    }),
+  };
+}
+
+function canInlineDocument(document: InsuranceParserDocument) {
+  return document.mimeType.startsWith('image/');
+}
+
+function toBase64(bytes: Uint8Array) {
+  return Buffer.from(bytes).toString('base64');
 }
 
 export class GeminiDocumentParser implements DocumentParser {
@@ -79,6 +91,14 @@ export class GeminiDocumentParser implements DocumentParser {
     private readonly options: {
       apiKey: string;
       model?: string;
+      onTiming?: (event: {
+        phase: string;
+        durationMs: number;
+        documentId?: string;
+        fileName?: string;
+        mimeType?: string;
+        sizeBytes?: number;
+      }) => void | Promise<void>;
     }
   ) {}
 
@@ -90,16 +110,49 @@ export class GeminiDocumentParser implements DocumentParser {
       const uploadedParts = [];
 
       for (const document of input.documents) {
-        const file = await downloadParserDocument(document);
+        const blobReadStartedAt = Date.now();
+        const { bytes, file } = await downloadParserDocument(document);
+        await this.options.onTiming?.({
+          phase: 'blob_read',
+          durationMs: Date.now() - blobReadStartedAt,
+          documentId: document.id,
+          fileName: document.fileName,
+          mimeType: document.mimeType,
+          sizeBytes: document.sizeBytes,
+        });
+
+        if (canInlineDocument(document)) {
+          const inlineStartedAt = Date.now();
+          uploadedParts.push(createPartFromBase64(toBase64(bytes), document.mimeType));
+          await this.options.onTiming?.({
+            phase: 'gemini_inline_file',
+            durationMs: Date.now() - inlineStartedAt,
+            documentId: document.id,
+            fileName: document.fileName,
+            mimeType: document.mimeType,
+            sizeBytes: document.sizeBytes,
+          });
+          continue;
+        }
+
         let uploadedFile;
 
         try {
+          const geminiUploadStartedAt = Date.now();
           uploadedFile = await ai.files.upload({
             file,
             config: {
               mimeType: document.mimeType,
               displayName: document.fileName,
             },
+          });
+          await this.options.onTiming?.({
+            phase: 'gemini_file_upload',
+            durationMs: Date.now() - geminiUploadStartedAt,
+            documentId: document.id,
+            fileName: document.fileName,
+            mimeType: document.mimeType,
+            sizeBytes: document.sizeBytes,
           });
         } catch (error) {
           throw new Error(
@@ -121,6 +174,7 @@ export class GeminiDocumentParser implements DocumentParser {
       let response;
 
       try {
+        const geminiGenerateStartedAt = Date.now();
         response = await ai.models.generateContent({
           model: this.options.model ?? 'gemini-flash-latest',
           contents: createUserContent([
@@ -131,6 +185,10 @@ export class GeminiDocumentParser implements DocumentParser {
             responseMimeType: 'application/json',
             responseJsonSchema: getGeminiResponseSchema(),
           },
+        });
+        await this.options.onTiming?.({
+          phase: 'gemini_generate',
+          durationMs: Date.now() - geminiGenerateStartedAt,
         });
       } catch (error) {
         throw new Error(`Gemini extraction failed: ${errorMessage(error)}`);

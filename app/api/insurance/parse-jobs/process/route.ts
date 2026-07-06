@@ -38,6 +38,15 @@ export async function POST(request: Request) {
       jobId,
       apiKey: process.env.GEMINI_API_KEY,
       model: process.env.GEMINI_MODEL,
+      onTiming: (event) => {
+        logger.info(
+          {
+            traceId,
+            ...event,
+          },
+          'insurance_parse_job_phase_timing'
+        );
+      },
     });
 
     logger.info(

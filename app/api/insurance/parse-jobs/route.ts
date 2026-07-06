@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { requireAdminApiUser } from '@/features/auth/admin';
-import { listInsuranceCases } from '@/features/insurance/adapters/prisma-case-repository';
-import { serializeCaseListItem } from '@/features/insurance/admin-api';
+import { listInsuranceQueueItems } from '@/features/insurance/adapters/prisma-case-repository';
+import { serializeQueueItem } from '@/features/insurance/admin-api';
 import { getRequestTraceId, logger } from '@/lib/logging/server';
 
 export const runtime = 'nodejs';
@@ -16,21 +16,21 @@ export async function GET(request: Request) {
   }
 
   try {
-    const cases = await listInsuranceCases();
+    const jobs = await listInsuranceQueueItems();
 
     logger.info(
       {
         traceId,
-        caseCount: cases.length,
+        jobCount: jobs.length,
         durationMs: Date.now() - startedAt,
       },
-      'insurance_admin_cases_listed'
+      'insurance_parse_jobs_listed'
     );
 
     return NextResponse.json(
       {
         traceId,
-        cases: cases.map(serializeCaseListItem),
+        jobs: jobs.map(serializeQueueItem),
       },
       {
         headers: {
@@ -40,7 +40,7 @@ export async function GET(request: Request) {
     );
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : 'Failed to list insurance cases.';
+      error instanceof Error ? error.message : 'Failed to list insurance parse jobs.';
 
     logger.error(
       {
@@ -48,7 +48,7 @@ export async function GET(request: Request) {
         error: message,
         durationMs: Date.now() - startedAt,
       },
-      'insurance_admin_cases_list_failed'
+      'insurance_parse_jobs_list_failed'
     );
 
     return NextResponse.json(
