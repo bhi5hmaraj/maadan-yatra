@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import type { Prisma } from '@/app/generated/prisma/client';
+import { Prisma } from '@/app/generated/prisma/client';
 import type { CreateInsuranceUploadInput } from '../domain';
 import type { InsuranceExtraction } from '../parser';
 import type { InsuranceShareSettings } from '../share-view';
@@ -184,6 +184,32 @@ export async function getInsuranceCaseForShare(caseId: string) {
     where: {
       id: caseId,
     },
+    select: {
+      id: true,
+      status: true,
+      customerName: true,
+      confirmedExtraction: true,
+      confirmedAt: true,
+      shareEnabled: true,
+      shareAllowedEmails: true,
+      shareFieldPaths: true,
+      updatedAt: true,
+    },
+  });
+}
+
+export async function listInsuranceCasesForShare() {
+  return prisma.insuranceCase.findMany({
+    where: {
+      shareEnabled: true,
+      confirmedExtraction: {
+        not: Prisma.JsonNull,
+      },
+    },
+    orderBy: {
+      confirmedAt: 'desc',
+    },
+    take: 200,
     select: {
       id: true,
       status: true,

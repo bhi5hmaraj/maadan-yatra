@@ -590,6 +590,10 @@ a {
   margin: 0 auto;
 }
 
+.insurance-share-page__main--wide {
+  max-width: 1220px;
+}
+
 .insurance-share-header {
   display: flex;
   align-items: flex-start;
@@ -672,6 +676,65 @@ a {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
+}
+
+.insurance-share-empty {
+  padding: 18px;
+  color: #6b665c;
+}
+
+.insurance-share-table-wrap {
+  width: 100%;
+  overflow: auto;
+}
+
+.insurance-share-table {
+  width: 100%;
+  min-width: 900px;
+  border-collapse: collapse;
+}
+
+.insurance-share-table th,
+.insurance-share-table td {
+  padding: 10px;
+  border-bottom: 1px solid #ebe5da;
+  text-align: left;
+  vertical-align: top;
+}
+
+.insurance-share-table th {
+  color: #534d43;
+  font-size: 12px;
+  font-weight: 700;
+  background: #f8f6f1;
+}
+
+.insurance-share-table td {
+  color: #252018;
+  font-size: 13px;
+}
+
+.insurance-share-table td:first-child {
+  min-width: 220px;
+}
+
+.insurance-share-table td:first-child,
+.insurance-share-table td:first-child strong,
+.insurance-share-table td:first-child span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.insurance-share-table td:first-child span {
+  color: #7a746a;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.insurance-share-table a {
+  color: #24495b;
+  font-weight: 700;
 }
 
 .document-page {
