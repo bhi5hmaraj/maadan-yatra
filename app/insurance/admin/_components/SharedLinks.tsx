@@ -1,7 +1,6 @@
 'use client';
 
-import Link from 'next/link';
-import { Button, Card, Empty, Space, Table, Tag, Typography } from 'antd';
+import { Button, Card, Empty, Space, Table, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { formatDateTime } from '@/features/insurance/presentation';
 import type { AdminCaseListItem } from '../_types';
@@ -26,25 +25,9 @@ export function SharedLinks(props: {
       ),
     },
     {
-      title: 'Allowed emails',
-      dataIndex: 'shareAllowedEmails',
-      render: (emails: string[]) =>
-        emails.length ? (
-          <Space size={[4, 4]} wrap>
-            {emails.map((email) => (
-              <Tag key={email}>{email}</Tag>
-            ))}
-          </Space>
-        ) : (
-          <Text type="secondary">None</Text>
-        ),
-    },
-    {
-      title: 'Fields',
-      dataIndex: 'shareFieldPaths',
-      width: 90,
-      render: (fields: string[]) => fields.length,
-      sorter: (a, b) => a.shareFieldPaths.length - b.shareFieldPaths.length,
+      title: 'Access',
+      key: 'access',
+      render: () => <Text type="secondary">Global settings</Text>,
     },
     {
       title: 'Updated',
@@ -58,28 +41,34 @@ export function SharedLinks(props: {
     {
       title: '',
       key: 'actions',
-      width: 220,
+      width: 120,
       render: (_, insuranceCase) => (
-        <Space>
-          <Link href={`/insurance/share?caseId=${insuranceCase.id}`} target="_blank">
-            <Button size="small">Open link</Button>
-          </Link>
-          <Link href={`/insurance/admin/cases/${insuranceCase.id}`}>
-            <Button size="small">Settings</Button>
-          </Link>
-        </Space>
+        <Button size="small" href={`/insurance/admin/cases/${insuranceCase.id}`}>
+          Open case
+        </Button>
       ),
     },
   ];
 
   return (
-    <Card className="insurance-admin-list-card" title="Shared links">
+    <Card
+      className="insurance-admin-list-card"
+      title="Cases in shared view"
+      extra={
+        <Space>
+          <Button href="/insurance/admin/share">Settings</Button>
+          <Button href="/insurance/share" target="_blank" type="primary">
+            Open single link
+          </Button>
+        </Space>
+      }
+    >
       <Table
         columns={columns}
         dataSource={sharedCases}
         loading={isLoading}
         locale={{
-          emptyText: <Empty description="No shared links yet" />,
+          emptyText: <Empty description="No cases added to the shared view yet" />,
         }}
         pagination={sharedCases.length > 5 ? { pageSize: 5 } : false}
         rowKey="id"

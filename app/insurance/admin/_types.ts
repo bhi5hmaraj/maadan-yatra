@@ -40,8 +40,6 @@ export interface AdminCaseListItem {
   parsedAt?: string | null;
   confirmedAt?: string | null;
   shareEnabled: boolean;
-  shareAllowedEmails: string[];
-  shareFieldPaths: string[];
   shareUpdatedAt?: string | null;
   createdAt: string;
   updatedAt: string;

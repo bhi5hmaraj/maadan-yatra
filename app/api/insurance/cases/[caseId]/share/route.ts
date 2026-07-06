@@ -1,13 +1,14 @@
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 import { requireAdminApiUser } from '@/features/auth/admin';
-import { updateInsuranceCaseShareSettings } from '@/features/insurance/adapters/prisma-case-repository';
-import {
-  insuranceShareSettingsSchema,
-  normalizeInsuranceShareSettings,
-} from '@/features/insurance/share-view';
+import { updateInsuranceCaseShareEnabled } from '@/features/insurance/adapters/prisma-case-repository';
 import { getRequestTraceId, logger } from '@/lib/logging/server';
 
 export const runtime = 'nodejs';
+
+const shareToggleSchema = z.object({
+  enabled: z.boolean(),
+});
 
 function jsonError(message: string, status: number, traceId: string) {
   return NextResponse.json(
@@ -31,13 +32,10 @@ export async function PUT(
 
   try {
     const body = await request.json();
-    const settings = normalizeInsuranceShareSettings(
-      insuranceShareSettingsSchema.parse(body)
-    );
-
-    const updatedCase = await updateInsuranceCaseShareSettings({
+    const { enabled } = shareToggleSchema.parse(body);
+    const updatedCase = await updateInsuranceCaseShareEnabled({
       caseId,
-      settings,
+      enabled,
       actorUserId: admin.user?.userId,
     });
 
@@ -45,12 +43,10 @@ export async function PUT(
       {
         traceId,
         caseId,
-        enabled: settings.enabled,
-        allowedEmailCount: settings.allowedEmails.length,
-        fieldCount: settings.fieldPaths.length,
+        enabled,
         durationMs: Date.now() - startedAt,
       },
-      'insurance_case_share_settings_updated'
+      'insurance_case_share_toggle_updated'
     );
 
     return NextResponse.json(
@@ -58,8 +54,6 @@ export async function PUT(
         traceId,
         caseId: updatedCase.id,
         shareEnabled: updatedCase.shareEnabled,
-        shareAllowedEmails: settings.allowedEmails,
-        shareFieldPaths: settings.fieldPaths,
         shareUpdatedAt: updatedCase.shareUpdatedAt?.toISOString() ?? null,
       },
       {
@@ -70,7 +64,7 @@ export async function PUT(
     );
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : 'Failed to update share settings.';
+      error instanceof Error ? error.message : 'Failed to update case sharing.';
 
     logger.error(
       {
@@ -79,7 +73,7 @@ export async function PUT(
         error: message,
         durationMs: Date.now() - startedAt,
       },
-      'insurance_case_share_settings_update_failed'
+      'insurance_case_share_toggle_update_failed'
     );
 
     return jsonError(message, 400, traceId);

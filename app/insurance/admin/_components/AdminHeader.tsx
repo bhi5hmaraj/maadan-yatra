@@ -25,6 +25,9 @@ export function AdminHeader(props: {
         <Link href="/insurance/admin/queue">
           <Button>Workflow</Button>
         </Link>
+        <Link href="/insurance/admin/share">
+          <Button>Share settings</Button>
+        </Link>
         <Link href="/insurance/upload">
           <Button icon={<UploadOutlined />}>Upload</Button>
         </Link>

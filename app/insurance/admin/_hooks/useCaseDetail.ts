@@ -23,7 +23,6 @@ export function useCaseDetail(input: {
   const [error, setError] = React.useState<string | null>(null);
   const [parsingCaseId, setParsingCaseId] = React.useState<string | null>(null);
   const [confirmingCaseId, setConfirmingCaseId] = React.useState<string | null>(null);
-  const [savingShareCaseId, setSavingShareCaseId] = React.useState<string | null>(null);
 
   const selectedExtraction = insuranceCase
     ? insuranceCase.confirmedExtraction ?? queuedExtraction ?? insuranceCase.aiExtraction ?? null
@@ -213,61 +212,6 @@ export function useCaseDetail(input: {
     }
   };
 
-  const saveShareSettings = async (settings: {
-    enabled: boolean;
-    allowedEmails: string[];
-    fieldPaths: string[];
-  }) => {
-    if (!insuranceCase) return;
-
-    const traceId = getClientTraceId();
-    const startedAt = performance.now();
-    setSavingShareCaseId(insuranceCase.id);
-
-    try {
-      const response = await fetch(`/api/insurance/cases/${insuranceCase.id}/share`, {
-        method: 'PUT',
-        headers: {
-          'content-type': 'application/json',
-          'x-trace-id': traceId,
-        },
-        body: JSON.stringify(settings),
-      });
-      const payload = await response.json();
-
-      if (!response.ok) {
-        throw new Error(payload.error ?? 'Failed to save sharing settings.');
-      }
-
-      await loadCase();
-      messageApi.success('Sharing settings saved.');
-      logClientEvent('insurance_admin_share_settings_saved', {
-        traceId,
-        caseId: insuranceCase.id,
-        enabled: settings.enabled,
-        allowedEmailCount: settings.allowedEmails.length,
-        fieldCount: settings.fieldPaths.length,
-        durationMs: Math.round(performance.now() - startedAt),
-      });
-    } catch (shareError) {
-      const message =
-        shareError instanceof Error ? shareError.message : 'Failed to save sharing settings.';
-      messageApi.error(message);
-      logClientEvent(
-        'insurance_admin_share_settings_save_failed',
-        {
-          traceId,
-          caseId: insuranceCase.id,
-          error: message,
-          durationMs: Math.round(performance.now() - startedAt),
-        },
-        'error'
-      );
-    } finally {
-      setSavingShareCaseId(null);
-    }
-  };
-
   return {
     confirmingCaseId,
     enqueueParse,
@@ -278,8 +222,6 @@ export function useCaseDetail(input: {
     loadCase,
     parsingCaseId,
     reviewForm,
-    savingShareCaseId,
-    saveShareSettings,
     selectedExtraction,
     confirmCase,
   };

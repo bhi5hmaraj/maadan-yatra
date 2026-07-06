@@ -17,8 +17,10 @@ const { Text } = Typography;
 export function CaseList(props: {
   cases: AdminCaseListItem[];
   isLoading: boolean;
+  sharingCaseId: string | null;
+  onToggleShare: (insuranceCase: AdminCaseListItem) => void;
 }) {
-  const { cases, isLoading } = props;
+  const { cases, isLoading, sharingCaseId, onToggleShare } = props;
   const [groupBy, setGroupBy] = React.useState<'none' | 'status'>('none');
   const caseStatuses = Array.from(new Set(cases.map((insuranceCase) => insuranceCase.status)));
   const jobStatuses = Array.from(
@@ -74,11 +76,21 @@ export function CaseList(props: {
     {
       title: '',
       key: 'action',
-      width: 110,
+      width: 210,
       render: (_, insuranceCase) => (
-        <Link href={`/insurance/admin/cases/${insuranceCase.id}`}>
-          <Button size="small">Open</Button>
-        </Link>
+        <Space>
+          <Button
+            size="small"
+            loading={sharingCaseId === insuranceCase.id}
+            disabled={!insuranceCase.confirmedAt}
+            onClick={() => onToggleShare(insuranceCase)}
+          >
+            {insuranceCase.shareEnabled ? 'Unshare' : 'Share'}
+          </Button>
+          <Link href={`/insurance/admin/cases/${insuranceCase.id}`}>
+            <Button size="small">Open</Button>
+          </Link>
+        </Space>
       ),
     },
   ];

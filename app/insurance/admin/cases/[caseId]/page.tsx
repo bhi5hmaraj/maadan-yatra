@@ -66,10 +66,8 @@ export default function InsuranceAdminCasePage({
               selectedCase={detail.insuranceCase}
               selectedExtraction={detail.selectedExtraction}
               isWorkflowActive={detail.hasActiveWorkflow}
-              savingShareCaseId={detail.savingShareCaseId}
               onConfirm={detail.confirmCase}
               onParse={detail.enqueueParse}
-              onSaveShareSettings={detail.saveShareSettings}
             />
             <Card title="Edit history" className="insurance-history-card">
               {detail.insuranceCase?.auditEvents.length ? (

@@ -30,6 +30,7 @@ export const insuranceShareSettingsSchema = z.object({
   enabled: z.boolean(),
   allowedEmails: z.array(z.string().email()).max(50),
   fieldPaths: z.array(z.string()).max(50),
+  expiresAt: z.string().datetime().nullable(),
 });
 
 export type InsuranceShareSettings = z.infer<typeof insuranceShareSettingsSchema>;
@@ -84,6 +85,7 @@ export function normalizeInsuranceShareSettings(input: InsuranceShareSettings) {
     fieldPaths: Array.from(
       new Set(input.fieldPaths.filter((fieldPath) => knownFieldPaths.has(fieldPath)))
     ),
+    expiresAt: input.expiresAt,
   };
 }
 

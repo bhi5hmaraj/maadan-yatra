@@ -179,25 +179,6 @@ export async function getInsuranceCaseForAdmin(caseId: string) {
   });
 }
 
-export async function getInsuranceCaseForShare(caseId: string) {
-  return prisma.insuranceCase.findUnique({
-    where: {
-      id: caseId,
-    },
-    select: {
-      id: true,
-      status: true,
-      customerName: true,
-      confirmedExtraction: true,
-      confirmedAt: true,
-      shareEnabled: true,
-      shareAllowedEmails: true,
-      shareFieldPaths: true,
-      updatedAt: true,
-    },
-  });
-}
-
 export async function listInsuranceCasesForShare() {
   return prisma.insuranceCase.findMany({
     where: {
@@ -217,16 +198,54 @@ export async function listInsuranceCasesForShare() {
       confirmedExtraction: true,
       confirmedAt: true,
       shareEnabled: true,
-      shareAllowedEmails: true,
-      shareFieldPaths: true,
       updatedAt: true,
     },
   });
 }
 
-export async function updateInsuranceCaseShareSettings(input: {
-  caseId: string;
+export async function getInsuranceShareSettings() {
+  return prisma.insuranceShareSettings.upsert({
+    where: {
+      id: 'default',
+    },
+    create: {
+      id: 'default',
+      allowedEmails: [],
+      fieldPaths: [],
+    },
+    update: {},
+  });
+}
+
+export async function updateInsuranceShareSettings(input: {
   settings: InsuranceShareSettings;
+  actorUserId?: string;
+}) {
+  return prisma.insuranceShareSettings.upsert({
+    where: {
+      id: 'default',
+    },
+    create: {
+      id: 'default',
+      enabled: input.settings.enabled,
+      allowedEmails: input.settings.allowedEmails as Prisma.InputJsonValue,
+      fieldPaths: input.settings.fieldPaths as Prisma.InputJsonValue,
+      expiresAt: input.settings.expiresAt ? new Date(input.settings.expiresAt) : null,
+      updatedByUserId: input.actorUserId,
+    },
+    update: {
+      enabled: input.settings.enabled,
+      allowedEmails: input.settings.allowedEmails as Prisma.InputJsonValue,
+      fieldPaths: input.settings.fieldPaths as Prisma.InputJsonValue,
+      expiresAt: input.settings.expiresAt ? new Date(input.settings.expiresAt) : null,
+      updatedByUserId: input.actorUserId,
+    },
+  });
+}
+
+export async function updateInsuranceCaseShareEnabled(input: {
+  caseId: string;
+  enabled: boolean;
   actorUserId?: string;
 }) {
   return prisma.insuranceCase.update({
@@ -234,20 +253,16 @@ export async function updateInsuranceCaseShareSettings(input: {
       id: input.caseId,
     },
     data: {
-      shareEnabled: input.settings.enabled,
-      shareAllowedEmails: input.settings.allowedEmails as Prisma.InputJsonValue,
-      shareFieldPaths: input.settings.fieldPaths as Prisma.InputJsonValue,
+      shareEnabled: input.enabled,
       shareUpdatedAt: new Date(),
       shareUpdatedByUserId: input.actorUserId,
       auditEvents: {
         create: {
           actorType: 'ADMIN',
           actorUserId: input.actorUserId,
-          action: 'insurance.case_share_settings_updated',
+          action: 'insurance.case_share_toggle_updated',
           metadata: {
-            enabled: input.settings.enabled,
-            allowedEmailCount: input.settings.allowedEmails.length,
-            fieldCount: input.settings.fieldPaths.length,
+            enabled: input.enabled,
           },
         },
       },

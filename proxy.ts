@@ -28,6 +28,10 @@ function isAdminApiRoute(request: Request) {
     return true;
   }
 
+  if (pathname === '/api/insurance/share-settings') {
+    return true;
+  }
+
   return false;
 }
 

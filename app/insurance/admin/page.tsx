@@ -28,6 +28,8 @@ export default function InsuranceAdminPage() {
           <CaseList
             cases={admin.cases}
             isLoading={admin.isLoading}
+            sharingCaseId={admin.sharingCaseId}
+            onToggleShare={admin.toggleCaseSharing}
           />
         </section>
       </main>

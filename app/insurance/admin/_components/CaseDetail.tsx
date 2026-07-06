@@ -13,7 +13,6 @@ import type { AdminCase } from '../_types';
 import { CaseDocuments } from './CaseDocuments';
 import { ExtractionReview } from './ExtractionReview';
 import { ParseJobs } from './ParseJobs';
-import { SharingSettings } from './SharingSettings';
 
 const { Text } = Typography;
 
@@ -24,14 +23,8 @@ export function CaseDetail(props: {
   selectedCase: AdminCase | null;
   selectedExtraction: InsuranceExtraction | null;
   isWorkflowActive?: boolean;
-  savingShareCaseId: string | null;
   onConfirm: () => void;
   onParse: () => void;
-  onSaveShareSettings: (settings: {
-    enabled: boolean;
-    allowedEmails: string[];
-    fieldPaths: string[];
-  }) => void;
 }) {
   const {
     confirmingCaseId,
@@ -40,10 +33,8 @@ export function CaseDetail(props: {
     selectedCase,
     selectedExtraction,
     isWorkflowActive,
-    savingShareCaseId,
     onConfirm,
     onParse,
-    onSaveShareSettings,
   } = props;
 
   return (
@@ -108,11 +99,6 @@ export function CaseDetail(props: {
             insuranceCase={selectedCase}
             selectedExtraction={selectedExtraction}
             onConfirm={onConfirm}
-          />
-          <SharingSettings
-            insuranceCase={selectedCase}
-            savingCaseId={savingShareCaseId}
-            onSave={onSaveShareSettings}
           />
         </div>
       ) : (

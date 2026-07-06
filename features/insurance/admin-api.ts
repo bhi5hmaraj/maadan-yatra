@@ -102,12 +102,6 @@ function serializeJob(job: {
   };
 }
 
-function stringArray(value: unknown) {
-  return Array.isArray(value)
-    ? value.filter((item): item is string => typeof item === 'string')
-    : [];
-}
-
 export function serializeCaseListItem(insuranceCase: InsuranceCaseListItem) {
   return {
     id: insuranceCase.id,
@@ -118,8 +112,6 @@ export function serializeCaseListItem(insuranceCase: InsuranceCaseListItem) {
     parsedAt: insuranceCase.parsedAt?.toISOString() ?? null,
     confirmedAt: insuranceCase.confirmedAt?.toISOString() ?? null,
     shareEnabled: insuranceCase.shareEnabled,
-    shareAllowedEmails: stringArray(insuranceCase.shareAllowedEmails),
-    shareFieldPaths: stringArray(insuranceCase.shareFieldPaths),
     shareUpdatedAt: insuranceCase.shareUpdatedAt?.toISOString() ?? null,
     createdAt: insuranceCase.createdAt.toISOString(),
     updatedAt: insuranceCase.updatedAt.toISOString(),
