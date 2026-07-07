@@ -74,9 +74,29 @@ export function CaseList(props: {
       render: (value: string) => formatDateTime(value),
     },
     {
+      title: 'Shared',
+      dataIndex: 'shareEnabled',
+      width: 120,
+      filters: [
+        { text: 'Shared', value: true },
+        { text: 'Not shared', value: false },
+      ],
+      onFilter: (value, record) => record.shareEnabled === value,
+      render: (isShared: boolean, insuranceCase) => (
+        <Space direction="vertical" size={0}>
+          <Tag color={isShared ? 'green' : 'default'}>
+            {isShared ? 'Shared' : 'Not shared'}
+          </Tag>
+          {isShared && insuranceCase.shareUpdatedAt ? (
+            <Text type="secondary">{formatDateTime(insuranceCase.shareUpdatedAt)}</Text>
+          ) : null}
+        </Space>
+      ),
+    },
+    {
       title: '',
       key: 'action',
-      width: 210,
+      width: 220,
       render: (_, insuranceCase) => (
         <Space>
           <Button

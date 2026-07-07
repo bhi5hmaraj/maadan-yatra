@@ -4,7 +4,6 @@ import { Alert, message } from 'antd';
 import { AdminHeader } from './_components/AdminHeader';
 import { AdminStats } from './_components/AdminStats';
 import { CaseList } from './_components/CaseList';
-import { SharedLinks } from './_components/SharedLinks';
 import { useCaseIndex } from './_hooks/useCaseIndex';
 
 export default function InsuranceAdminPage() {
@@ -23,15 +22,12 @@ export default function InsuranceAdminPage() {
 
         <AdminStats cases={admin.cases} />
 
-        <section className="insurance-admin-index-grid">
-          <SharedLinks cases={admin.cases} isLoading={admin.isLoading} />
-          <CaseList
-            cases={admin.cases}
-            isLoading={admin.isLoading}
-            sharingCaseId={admin.sharingCaseId}
-            onToggleShare={admin.toggleCaseSharing}
-          />
-        </section>
+        <CaseList
+          cases={admin.cases}
+          isLoading={admin.isLoading}
+          sharingCaseId={admin.sharingCaseId}
+          onToggleShare={admin.toggleCaseSharing}
+        />
       </main>
     </div>
   );
