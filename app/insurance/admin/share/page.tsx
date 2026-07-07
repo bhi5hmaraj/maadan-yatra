@@ -1,12 +1,28 @@
 'use client';
 
 import React from 'react';
-import { Alert, Button, Card, Checkbox, Input, Skeleton, Switch, Typography, message } from 'antd';
+import {
+  Alert,
+  Button,
+  Card,
+  Checkbox,
+  Empty,
+  Input,
+  Skeleton,
+  Space,
+  Switch,
+  Table,
+  Tag,
+  Typography,
+  message,
+} from 'antd';
+import type { ColumnsType } from 'antd/es/table';
 import { AdminHeader } from '../_components/AdminHeader';
 import {
   defaultInsuranceShareFieldPaths,
   insuranceShareFieldCatalog,
 } from '@/features/insurance/share-view';
+import { formatDateTime, statusLabel } from '@/features/insurance/presentation';
 import { getClientTraceId, logClientEvent } from '@/lib/logging/client';
 
 const { Text } = Typography;
@@ -17,6 +33,22 @@ interface ShareSettings {
   fieldPaths: string[];
   expiresAt: string | null;
   updatedAt?: string | null;
+}
+
+interface SharePreviewRow {
+  path: string;
+  groupLabel: string;
+  label: string;
+  value: string | null;
+}
+
+interface SharePreviewCase {
+  id: string;
+  customerName?: string | null;
+  status: string;
+  confirmedAt?: string | null;
+  updatedAt: string;
+  rows: SharePreviewRow[];
 }
 
 function emailsToText(emails: string[]) {
@@ -48,6 +80,7 @@ function datetimeLocalToIso(value: string) {
 export default function InsuranceShareSettingsPage() {
   const [messageApi, contextHolder] = message.useMessage();
   const [settings, setSettings] = React.useState<ShareSettings | null>(null);
+  const [previewCases, setPreviewCases] = React.useState<SharePreviewCase[]>([]);
   const [enabled, setEnabled] = React.useState(false);
   const [emails, setEmails] = React.useState('');
   const [fieldPaths, setFieldPaths] = React.useState<string[]>(defaultInsuranceShareFieldPaths);
@@ -73,6 +106,7 @@ export default function InsuranceShareSettingsPage() {
 
       const nextSettings = payload.settings as ShareSettings;
       setSettings(nextSettings);
+      setPreviewCases(payload.preview?.sharedCases ?? []);
       setEnabled(nextSettings.enabled);
       setEmails(emailsToText(nextSettings.allowedEmails));
       setFieldPaths(
@@ -122,6 +156,7 @@ export default function InsuranceShareSettingsPage() {
       }
 
       setSettings(payload.settings);
+      setPreviewCases(payload.preview?.sharedCases ?? []);
       messageApi.success('Share settings saved.');
       logClientEvent('insurance_admin_global_share_settings_saved', {
         traceId,
@@ -138,6 +173,55 @@ export default function InsuranceShareSettingsPage() {
       setIsSaving(false);
     }
   };
+
+  const selectedFields = React.useMemo(
+    () =>
+      fieldPaths
+        .map((fieldPath) =>
+          insuranceShareFieldCatalog.find((field) => field.path === fieldPath)
+        )
+        .filter((field): field is NonNullable<typeof field> => Boolean(field)),
+    [fieldPaths]
+  );
+
+  const previewColumns: ColumnsType<SharePreviewCase> = React.useMemo(
+    () => [
+      {
+        title: 'Case',
+        dataIndex: 'customerName',
+        fixed: 'left',
+        render: (_, insuranceCase) => (
+          <Space direction="vertical" size={0}>
+            <Text strong>{insuranceCase.customerName || 'Unnamed case'}</Text>
+            <Text type="secondary">{insuranceCase.id.slice(0, 8)}</Text>
+          </Space>
+        ),
+      },
+      {
+        title: 'Status',
+        dataIndex: 'status',
+        width: 120,
+        render: (status: string) => <Tag>{statusLabel(status)}</Tag>,
+      },
+      {
+        title: 'Verified',
+        dataIndex: 'confirmedAt',
+        width: 170,
+        render: (value?: string | null) =>
+          value ? formatDateTime(value) : <Text type="secondary">Not recorded</Text>,
+      },
+      ...selectedFields.map((field) => ({
+        title: field.label,
+        key: field.path,
+        width: 180,
+        render: (_: unknown, insuranceCase: SharePreviewCase) => {
+          const row = insuranceCase.rows.find((item) => item.path === field.path);
+          return row?.value ?? <Text type="secondary">-</Text>;
+        },
+      })),
+    ],
+    [selectedFields]
+  );
 
   return (
     <div className="insurance-admin-page">
@@ -215,6 +299,39 @@ export default function InsuranceShareSettingsPage() {
               </div>
             </div>
           )}
+        </Card>
+
+        <Card
+          className="insurance-admin-detail-card"
+          title="Shared table preview"
+          extra={
+            <Space size={[6, 6]} wrap>
+              {selectedFields.length ? (
+                selectedFields.map((field) => (
+                  <Tag key={field.path}>
+                    {field.groupLabel}: {field.label}
+                  </Tag>
+                ))
+              ) : (
+                <Text type="secondary">No fields selected</Text>
+              )}
+            </Space>
+          }
+        >
+          <Table
+            columns={previewColumns}
+            dataSource={previewCases}
+            loading={isLoading || isSaving}
+            locale={{
+              emptyText: (
+                <Empty description="No verified shared cases match these settings yet" />
+              ),
+            }}
+            pagination={previewCases.length > 10 ? { pageSize: 10 } : false}
+            rowKey="id"
+            scroll={{ x: 'max-content' }}
+            size="middle"
+          />
         </Card>
       </main>
     </div>

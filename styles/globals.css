@@ -301,6 +301,17 @@ a {
   margin: 0 auto;
 }
 
+.insurance-route-loading {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 12px;
+  background: #f2f0ea;
+  color: #534d43;
+  font-weight: 700;
+}
+
 .insurance-admin-header {
   display: flex;
   align-items: flex-start;
@@ -338,11 +349,6 @@ a {
   grid-template-columns: 360px minmax(0, 1fr);
   gap: 14px;
   align-items: start;
-}
-
-.insurance-admin-index-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
 }
 
 .insurance-case-detail-grid {

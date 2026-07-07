@@ -2,11 +2,14 @@ import { NextResponse } from 'next/server';
 import { requireAdminApiUser } from '@/features/auth/admin';
 import {
   getInsuranceShareSettings,
+  listInsuranceCasesForShare,
   updateInsuranceShareSettings,
 } from '@/features/insurance/adapters/prisma-case-repository';
 import {
+  getInsuranceShareRows,
   insuranceShareSettingsSchema,
   normalizeInsuranceShareSettings,
+  parseConfirmedInsuranceExtraction,
 } from '@/features/insurance/share-view';
 import { getRequestTraceId, logger } from '@/lib/logging/server';
 
@@ -35,6 +38,29 @@ function serializeShareSettings(settings: Awaited<ReturnType<typeof getInsurance
   };
 }
 
+async function getSharePreview(fieldPaths: string[]) {
+  const sharedCases = await listInsuranceCasesForShare();
+
+  return sharedCases
+    .map((insuranceCase) => {
+      const confirmed = parseConfirmedInsuranceExtraction(
+        insuranceCase.confirmedExtraction
+      );
+
+      if (!confirmed.success) return null;
+
+      return {
+        id: insuranceCase.id,
+        customerName: insuranceCase.customerName,
+        status: insuranceCase.status,
+        confirmedAt: insuranceCase.confirmedAt?.toISOString() ?? null,
+        updatedAt: insuranceCase.updatedAt.toISOString(),
+        rows: getInsuranceShareRows(confirmed.data, fieldPaths),
+      };
+    })
+    .filter((item): item is NonNullable<typeof item> => Boolean(item));
+}
+
 export async function GET(request: Request) {
   const traceId = getRequestTraceId(request);
   const admin = await requireAdminApiUser(traceId);
@@ -44,11 +70,16 @@ export async function GET(request: Request) {
   }
 
   const settings = await getInsuranceShareSettings();
+  const serializedSettings = serializeShareSettings(settings);
+  const sharedCases = await getSharePreview(serializedSettings.fieldPaths);
 
   return NextResponse.json(
     {
       traceId,
-      settings: serializeShareSettings(settings),
+      settings: serializedSettings,
+      preview: {
+        sharedCases,
+      },
     },
     {
       headers: {
@@ -76,6 +107,8 @@ export async function PUT(request: Request) {
       settings,
       actorUserId: admin.user?.userId,
     });
+    const serializedSettings = serializeShareSettings(updatedSettings);
+    const sharedCases = await getSharePreview(serializedSettings.fieldPaths);
 
     logger.info(
       {
@@ -92,7 +125,10 @@ export async function PUT(request: Request) {
     return NextResponse.json(
       {
         traceId,
-        settings: serializeShareSettings(updatedSettings),
+        settings: serializedSettings,
+        preview: {
+          sharedCases,
+        },
       },
       {
         headers: {

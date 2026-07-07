@@ -101,6 +101,5 @@ export function getInsuranceShareRows(
     .map((field) => ({
       ...field,
       value: formatShareValue(getExtractionValue(extraction, field.path)),
-    }))
-    .filter((field) => field.value !== null);
+    }));
 }
