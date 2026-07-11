@@ -75,6 +75,10 @@ npm run build
 npx prisma migrate status
 ```
 
+`npm run build` runs `prisma migrate deploy` before `next build`, so the
+database must be reachable and `DATABASE_URL` must point at the intended Neon
+branch.
+
 If dev ports are stuck:
 
 ```bash
@@ -86,15 +90,10 @@ ss -ltnp '( sport = :3000 or sport = :3001 or sport = :3002 or sport = :3003 )'
 Use Vercel for the app.
 
 1. Add the env keys below in Vercel.
-2. Deploy the branch.
-3. Run database migrations against the target Neon database:
-
-```bash
-npx prisma migrate deploy
-```
-
-4. Sign in with an email from `CLERK_ADMIN_EMAILS`.
-5. Upload a test insurance case, parse it, verify it, then share it with a test
+2. Deploy the branch. The build command applies pending Prisma migrations
+   automatically before building Next.js.
+3. Sign in with an email from `CLERK_ADMIN_EMAILS`.
+4. Upload a test insurance case, parse it, verify it, then share it with a test
    partner email.
 
 ## Env Keys
