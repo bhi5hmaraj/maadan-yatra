@@ -1,6 +1,6 @@
 'use client';
 
-import { Alert, message } from 'antd';
+import { Alert, Spin, message } from 'antd';
 import { AdminHeader } from './_components/AdminHeader';
 import { AdminStats } from './_components/AdminStats';
 import { CaseList } from './_components/CaseList';
@@ -15,6 +15,16 @@ export default function InsuranceAdminPage() {
       {contextHolder}
       <main className="insurance-admin-page__main">
         <AdminHeader isLoading={admin.isLoading} onRefresh={admin.loadCases} />
+
+        {admin.isLoading ? (
+          <Alert
+            type="info"
+            showIcon
+            icon={<Spin size="small" />}
+            message="Loading insurance cases"
+            description="Checking server configuration and loading the latest data."
+          />
+        ) : null}
 
         {admin.error ? (
           <Alert type="error" showIcon message="Could not load cases" description={admin.error} />

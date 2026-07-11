@@ -312,6 +312,27 @@ a {
   font-weight: 700;
 }
 
+.insurance-route-loading .ant-alert {
+  width: min(480px, calc(100vw - 32px));
+}
+
+.insurance-config-issues {
+  margin: 6px 0 0;
+  padding-left: 20px;
+}
+
+.insurance-config-issues li + li {
+  margin-top: 4px;
+}
+
+.insurance-config-banner {
+  position: relative;
+  z-index: 10;
+  max-width: 1180px;
+  margin: 16px auto 0;
+  padding: 0 22px;
+}
+
 .insurance-admin-header {
   display: flex;
   align-items: flex-start;

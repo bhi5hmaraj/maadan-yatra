@@ -77,7 +77,8 @@ npx prisma migrate status
 
 `npm run build` runs `prisma migrate deploy` before `next build`, so the
 database must be reachable and `DATABASE_URL` must point at the intended Neon
-branch.
+branch. It first validates all required insurance environment variables and
+prints every missing key in one error.
 
 If dev ports are stuck:
 
@@ -120,5 +121,6 @@ LOG_TO_FILE=false
 Notes:
 
 - `CLERK_ADMIN_EMAILS` is a comma-separated list.
-- Vercel Blob may set `BLOB_READ_WRITE_TOKEN` for you if the Blob store is linked.
+- Blob requires either `BLOB_READ_WRITE_TOKEN`, or both `VERCEL_OIDC_TOKEN` and
+  `BLOB_STORE_ID`.
 - Keep `DATABASE_URL` pointed at the right Neon branch for the environment.
